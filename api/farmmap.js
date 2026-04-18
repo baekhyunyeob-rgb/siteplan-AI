@@ -1,6 +1,5 @@
 // api/farmmap.js
-// 팜맵 토양검정 정보 조회
-// 농지 여부 및 토양 특성 파악용 (좌표 기반)
+// 팜맵 토양검정 정보 조회 (좌표 기반)
 
 export default async function handler(req, res) {
   const { lat, lng } = req.query
@@ -13,14 +12,20 @@ export default async function handler(req, res) {
   if (!lat || !lng) return res.status(400).json({ error: 'lat, lng required' })
 
   try {
+    // serviceKey는 encodeURIComponent 하지 않고 그대로 사용
     const url = `https://apis.data.go.kr/B552895/rest/farmmap/getFarmmapSoilAnalysisService` +
       `/getCoordinateBasedSoilAnalsInfo` +
-      `?serviceKey=${KEY}&lat=${lat}&lon=${lng}&_type=json`
+      `?serviceKey=${KEY}&lat=${lat}&lon=${lng}&numOfRows=1&pageNo=1&_type=json`
 
     console.log(`[farmmap] lat=${lat} lng=${lng}`)
     const response = await fetch(url)
     const text = await response.text()
-    console.log(`[farmmap] status=${response.status} preview=${text.substring(0, 100)}`)
+    console.log(`[farmmap] status=${response.status} preview=${text.substring(0, 200)}`)
+
+    // XML 응답이면 에러 처리
+    if (text.trim().startsWith('<?xml') || text.trim().startsWith('<')) {
+      return res.status(200).json({ error: 'xml_response', raw: text.substring(0, 300) })
+    }
 
     try {
       const data = JSON.parse(text)

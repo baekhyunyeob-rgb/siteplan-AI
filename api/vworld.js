@@ -31,8 +31,8 @@ export default async function handler(req, res) {
         `?key=${KEY}&pnu=${pnu}&format=json`
 
     } else if (action === 'landuse') {
-      // 토지이용계획: 용도지역·저촉여부·개발제한
-      url = `https://api.vworld.kr/ned/data/getLandUseInfo` +
+      // 토지이용계획: 용도지역지구 저촉여부
+      url = `https://api.vworld.kr/ned/data/ladfrlList` +
         `?key=${KEY}&pnu=${pnu}&format=json`
 
     } else if (action === 'landchar') {

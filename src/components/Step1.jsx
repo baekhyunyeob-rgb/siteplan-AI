@@ -5,20 +5,20 @@ const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY
 
 // ── API 함수들 ──────────────────────────────────────────
 
-// 1. 카카오: 주소 → 위경도
+// 1. 카카오: 주소 → 위경도 (지도 표시용)
 async function getCoordFromAddress(address) {
   const res = await fetch(
     `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(address)}`,
     { headers: { Authorization: `KakaoAK ${KAKAO_REST_KEY}` } }
   )
   const data = await res.json()
-  if (!data.documents?.length) throw new Error('주소를 찾을 수 없습니다. 더 자세히 입력해주세요.')
+  if (!data.documents?.length) throw new Error('주소를 찾을 수 없습니다')
   const doc = data.documents[0]
   const addr = doc.address ?? doc.road_address
   return { lng: parseFloat(addr.x), lat: parseFloat(addr.y) }
 }
 
-// 2. 카카오: 위경도 → 주소 (GPS용 역지오코딩)
+// 2. 카카오: 위경도 → 주소 (GPS 역지오코딩)
 async function getAddressFromCoord(lat, lng) {
   const res = await fetch(
     `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lng}&y=${lat}`,
@@ -28,26 +28,32 @@ async function getAddressFromCoord(lat, lng) {
   return data.documents?.[0]?.address?.address_name ?? ''
 }
 
-// 3. vworld: 위경도 → PNU (Vercel Route 경유)
-async function getPNU(lat, lng) {
-  const res = await fetch(`/api/vworld?action=geocode&lat=${lat}&lng=${lng}`)
-  const data = await res.json()
-  // 올바른 PNU 경로: response.refined.structure.level4LC
-  const pnu = data?.response?.refined?.structure?.level4LC
-  if (!pnu) throw new Error('PNU를 찾을 수 없습니다')
+// 3. vworld: 주소 → PNU (Vercel Route 경유, 이전 앱 검증된 방식)
+// PNU 경로: geo.response.refined.structure.level4LC
+async function getPNU(address) {
+  const res = await fetch(`/api/vworld?action=geocode&address=${encodeURIComponent(address)}`)
+  const geo = await res.json()
+  const pnu = geo?.response?.refined?.structure?.level4LC
+  if (!pnu) throw new Error('필지 정보를 찾을 수 없어요')
   return pnu
 }
 
-// 4. vworld: PNU → 토지정보 (Vercel Route 경유)
+// 4. vworld: PNU → 토지정보 (Vercel Route 경유, 이전 앱 검증된 엔드포인트)
 async function getLandInfo(pnu) {
-  const res = await fetch(`/api/vworld?action=landinfo&pnu=${pnu}`)
+  const res = await fetch(`/api/vworld?action=landinfo&pnu=${encodeURIComponent(pnu)}`)
   const data = await res.json()
   if (data.error) throw new Error(data.error)
-  const item = data?.fields?.field?.[0]
+
+  // ladfrlList 응답 구조에서 필요한 필드 추출
+  const item = data?.landCharacteristics?.landCharacteristic?.[0]
+    ?? data?.field?.[0]
+    ?? data?.fields?.field?.[0]
+
   if (!item) throw new Error('토지정보를 찾을 수 없습니다')
+
   return {
-    용도지역: item.prposAreaDstrcNm ?? '확인 필요',
-    지목: item.lndcgrCodeNm ?? '확인 필요',
+    용도지역: item.prposAreaDstrcNm ?? item.jimok ?? '확인 필요',
+    지목: item.lndcgrCodeNm ?? item.jimokNm ?? '확인 필요',
     면적: item.lndpclAr ? `${item.lndpclAr}㎡` : '확인 필요',
     공시지가: item.pblntfPclnd
       ? `${Number(item.pblntfPclnd).toLocaleString()}원/㎡`
@@ -108,7 +114,7 @@ const s = {
     background: '#FCEBEB', borderRadius: 8, padding: '10px 12px',
     fontSize: 12, color: '#A32D2D', marginBottom: 8,
   },
-  resultBox: { borderRadius: 8, overflow: 'hidden', border: '1px solid #E8E8E8' },
+  resultBox: { borderRadius: 8, overflow: 'hidden', border: '1px solid #E8E8E8', marginBottom: 4 },
   resultRow: {
     display: 'flex', justifyContent: 'space-between',
     padding: '8px 12px', fontSize: 12,
@@ -174,21 +180,18 @@ export default function Step1({ onNext }) {
     })
   }, [coord])
 
-  // 공통 조회 함수
-  async function fetchLandData(lat, lng) {
-    const pnu = await getPNU(lat, lng)
-    const info = await getLandInfo(pnu)
-    setLandInfo(info)
-  }
-
   // 주소 조회
   async function handleSearch() {
     if (!address.trim()) return
     setLoading(true); setError(null); setLandInfo(null); setCoord(null)
     try {
+      // 카카오: 지도 표시용 좌표
       const { lat, lng } = await getCoordFromAddress(address)
       setCoord({ lat, lng })
-      await fetchLandData(lat, lng)
+      // vworld: 주소 직접 → PNU → 토지정보
+      const pnu = await getPNU(address)
+      const info = await getLandInfo(pnu)
+      setLandInfo(info)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -204,9 +207,13 @@ export default function Step1({ onNext }) {
       async ({ coords: { latitude: lat, longitude: lng } }) => {
         try {
           setCoord({ lat, lng })
+          // 카카오 역지오코딩으로 주소 텍스트 획득
           const addr = await getAddressFromCoord(lat, lng)
           if (addr) setAddress(addr)
-          await fetchLandData(lat, lng)
+          // vworld: 주소 → PNU → 토지정보
+          const pnu = await getPNU(addr || `${lat},${lng}`)
+          const info = await getLandInfo(pnu)
+          setLandInfo(info)
         } catch (e) {
           setError(e.message)
         } finally {
@@ -245,7 +252,7 @@ export default function Step1({ onNext }) {
             : <div style={s.mapEmpty}>주소를 입력하면 지도가 표시됩니다</div>
           }
 
-          {/* 토지정보 */}
+          {/* 토지정보 결과 */}
           {landInfo && (
             <div style={s.resultBox}>
               {Object.entries(landInfo).map(([k, v], i, arr) => (

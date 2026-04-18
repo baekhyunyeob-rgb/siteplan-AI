@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/vworld.js": {
+      "regions": ["icn1"]
+    }
+  }
+}

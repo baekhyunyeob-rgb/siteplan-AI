@@ -44,20 +44,16 @@ async function getLandInfo(pnu) {
   const data = await res.json()
   if (data.error) throw new Error(data.error)
 
-  // ladfrlList 응답 구조에서 필요한 필드 추출
-  const item = data?.landCharacteristics?.landCharacteristic?.[0]
-    ?? data?.field?.[0]
-    ?? data?.fields?.field?.[0]
+  // 실제 응답 구조: data.ladfrlVOList.ladfrlVOList[0]
+  const item = data?.ladfrlVOList?.ladfrlVOList?.[0]
 
   if (!item) throw new Error('토지정보를 찾을 수 없습니다')
 
   return {
-    용도지역: item.prposAreaDstrcNm ?? item.jimok ?? '확인 필요',
-    지목: item.lndcgrCodeNm ?? item.jimokNm ?? '확인 필요',
-    면적: item.lndpclAr ? `${item.lndpclAr}㎡` : '확인 필요',
-    공시지가: item.pblntfPclnd
-      ? `${Number(item.pblntfPclnd).toLocaleString()}원/㎡`
-      : '확인 필요',
+    주소: item.ldCodeNm ?? '확인 필요',
+    지목: item.lndcgrCodeNm ?? '확인 필요',
+    면적: item.lndpclAr ? `${Number(item.lndpclAr).toLocaleString()}㎡` : '확인 필요',
+    지번: item.mnnmSlno ?? '확인 필요',
   }
 }
 

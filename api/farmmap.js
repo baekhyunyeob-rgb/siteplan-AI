@@ -75,31 +75,37 @@ export default async function handler(req, res) {
     const tm = wgs84ToTM(parseFloat(lat), parseFloat(lng))
     console.log(`[farmmap] lat=${lat} lng=${lng} → positionX=${tm.x} positionY=${tm.y}`)
 
-    const targetYear = year || new Date().getFullYear() - 1
+    // 연도별 순차 조회 (최신년도부터 2018까지)
+    const startYear = parseInt(year) || new Date().getFullYear() - 1
+    const years = Array.from({ length: startYear - 2017 }, (_, i) => startYear - i)
 
-    const url = `https://apis.data.go.kr/B552895/rest/farmmap/getFarmmapSoilAnalysisService` +
-      `/getCoordinateBasedSoilAnalsInfo` +
-      `?serviceKey=${encodeURIComponent(KEY)}` +
-      `&numOfRows=1&pageNo=1&type=json` +
-      `&positionX=${tm.x}&positionY=${tm.y}` +
-      `&year=${targetYear}`
+    for (const targetYear of years) {
+      const url = `https://apis.data.go.kr/B552895/rest/farmmap/getFarmmapSoilAnalysisService` +
+        `/getCoordinateBasedSoilAnalsInfo` +
+        `?serviceKey=${encodeURIComponent(KEY)}` +
+        `&numOfRows=1&pageNo=1&type=json` +
+        `&positionX=${tm.x}&positionY=${tm.y}` +
+        `&year=${targetYear}`
 
-    console.log(`[farmmap] url=${url}`)
-    const response = await fetch(url)
-    const text = await response.text()
-    console.log(`[farmmap] status=${response.status} preview=${text.substring(0, 200)}`)
+      console.log(`[farmmap] url=${url}`)
+      const response = await fetch(url)
+      const text = await response.text()
+      console.log(`[farmmap] year=${targetYear} status=${response.status} preview=${text.substring(0, 100)}`)
 
-    if (text.trim().startsWith('<?xml') || text.trim().startsWith('<')) {
-      // XML 응답이면 에러 내용 파싱
-      return res.status(200).json({ error: 'xml_response', raw: text.substring(0, 300) })
+      if (text.trim().startsWith('<?xml') || text.trim().startsWith('<')) continue
+
+      try {
+        const data = JSON.parse(text)
+        const items = data?.response?.body?.items?.item
+        if (items && (Array.isArray(items) ? items.length > 0 : true)) {
+          console.log(`[farmmap] found data at year=${targetYear}`)
+          return res.status(200).json({ ...data, foundYear: targetYear })
+        }
+      } catch { continue }
     }
 
-    try {
-      const data = JSON.parse(text)
-      return res.status(200).json(data)
-    } catch {
-      return res.status(500).json({ error: 'parse failed', raw: text.substring(0, 300) })
-    }
+    // 모든 연도 조회 실패
+    return res.status(200).json({ error: 'no_data', message: '해당 위치의 토양 정보가 없습니다' })
 
   } catch (e) {
     console.error('[farmmap] error:', e)

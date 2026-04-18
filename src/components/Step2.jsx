@@ -30,7 +30,7 @@ const QUESTIONS = {
   리모델링: [
     { key: '구조', label: '건물 구조', opts: ['목조', '조적조', '철근콘크리트', '모름'] },
     { key: '준공', label: '추정 준공연도', opts: ['1980년 이전', '1980~2000년', '2000년 이후', '모름'] },
-    { key: '문제부위', label: '주요 문제 부위', opts: ['지붕', '외벽', '내부', '설비', '복합'] },
+    { key: '문제부위', label: '주요 문제 부위 (복수선택)', opts: ['지붕', '외벽', '내부', '설비', '기초·침하', '창호'], multiple: true },
     { key: '용도변경', label: '용도 변경', opts: ['현행 유지', '주거→상업', '농업시설→주거', '기타'] },
     { key: '설비', label: '설비 상태', opts: ['교체 필요', '부분 교체', '양호', '모름'] },
   ],
@@ -75,7 +75,17 @@ export default function Step2({ address, coord, purpose, setPurpose, requirement
   const [collecting, setCollecting] = useState(false)
   const [collected, setCollected] = useState(false)
 
-  const setAns = (key, val) => setAnswers(p => ({ ...p, [key]: val }))
+  const setAns = (key, val, multiple) => {
+    if (multiple) {
+      setAnswers(p => {
+        const prev = Array.isArray(p[key]) ? p[key] : []
+        const exists = prev.includes(val)
+        return { ...p, [key]: exists ? prev.filter(v => v !== val) : [...prev, val] }
+      })
+    } else {
+      setAnswers(p => ({ ...p, [key]: val }))
+    }
+  }
 
   // 목적 선택 시 백그라운드에서 공간정보 수집
   useEffect(() => {
@@ -130,20 +140,29 @@ export default function Step2({ address, coord, purpose, setPurpose, requirement
         <div style={s.card}>
           <div style={s.cardHeader}>세부 조건</div>
           <div style={s.cardBody}>
-            {questions.map(q => (
-              <div key={q.key} style={s.qItem}>
-                <div style={s.qLabel}>{q.label}</div>
-                <div style={s.opts}>
-                  {q.opts.map(opt => (
-                    <span
-                      key={opt}
-                      style={s.opt(answers[q.key] === opt)}
-                      onClick={() => setAns(q.key, opt)}
-                    >{opt}</span>
-                  ))}
+            {questions.map(q => {
+              const isMultiple = !!q.multiple
+              const selected = isMultiple
+                ? (Array.isArray(answers[q.key]) ? answers[q.key] : [])
+                : answers[q.key]
+              return (
+                <div key={q.key} style={s.qItem}>
+                  <div style={s.qLabel}>{q.label}</div>
+                  <div style={s.opts}>
+                    {q.opts.map(opt => {
+                      const isActive = isMultiple ? selected.includes(opt) : selected === opt
+                      return (
+                        <span
+                          key={opt}
+                          style={s.opt(isActive)}
+                          onClick={() => setAns(q.key, opt, isMultiple)}
+                        >{opt}</span>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
 
             {/* 예산 */}
             <div style={s.qItem}>

@@ -92,16 +92,15 @@ export default function Step3({ landData, purpose, requirements, onBack, onNext 
   return (
     <div style={s.wrap}>
 
-      {/* 필지 지도 */}
-      <div style={s.card}>
-        <div style={s.cardHeader}>필지 현황</div>
-        <div style={s.cardBody}>
-          {landData?.좌표
-            ? <div style={s.mapBox}><div ref={mapRef} style={{ width: '100%', height: '100%' }} /></div>
-            : <div style={s.mapEmpty}>공간정보를 불러오는 중...</div>
-          }
-        </div>
-      </div>
+      {/* 필지 지도 - 전체 너비 */}
+      {landData?.좌표
+        ? <div style={{ height: 280, borderRadius: 14, overflow: 'hidden', border: '1px solid #E8E8E8' }}>
+            <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+          </div>
+        : <div style={{ height: 200, borderRadius: 14, background: '#F7F7F5', border: '1px solid #E8E8E8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#bbb' }}>
+            공간정보를 불러오는 중...
+          </div>
+      }
 
       {/* 토지 정보 */}
       {(basic || char) && (

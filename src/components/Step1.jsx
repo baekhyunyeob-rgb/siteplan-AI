@@ -120,43 +120,48 @@ export default function Step1({ onNext, onLandData }) {
 
   // 지도 표시 + 필지경계 폴리곤 + 자동 축척
   useEffect(() => {
-    if (!coord || !mapRef.current) return
-    loadKakaoMap().then(() => {
-      const { kakao } = window
-      const position = new kakao.maps.LatLng(coord.lat, coord.lng)
+    if (!coord) return
 
-      if (!mapInstance.current) {
+    // DOM이 준비될 때까지 기다린 후 지도 초기화
+    const timer = setTimeout(() => {
+      if (!mapRef.current) return
+      loadKakaoMap().then(() => {
+        const { kakao } = window
+        const position = new kakao.maps.LatLng(coord.lat, coord.lng)
+
+        // 기존 지도 인스턴스 제거 후 새로 생성 (주소 변경 시 충돌 방지)
+        if (mapInstance.current) {
+          mapInstance.current = null
+        }
         mapInstance.current = new kakao.maps.Map(mapRef.current, { center: position, level: 4 })
-      } else {
-        mapInstance.current.setCenter(position)
-      }
+        const map = mapInstance.current
 
-      const map = mapInstance.current
+        // 필지경계 폴리곤 그리기
+        if (landData?.필지경계?.coordinates) {
+          const coords = landData.필지경계.coordinates[0][0]
+          const path = coords.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng))
 
-      // 필지경계 폴리곤 그리기
-      if (landData?.필지경계?.coordinates) {
-        const coords = landData.필지경계.coordinates[0][0]
-        const path = coords.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng))
+          new kakao.maps.Polygon({
+            map,
+            path,
+            strokeWeight: 2,
+            strokeColor: '#0F6E56',
+            strokeOpacity: 0.9,
+            fillColor: '#E1F5EE',
+            fillOpacity: 0.4,
+          })
 
-        const polygon = new kakao.maps.Polygon({
-          map,
-          path,
-          strokeWeight: 2,
-          strokeColor: '#0F6E56',
-          strokeOpacity: 0.9,
-          fillColor: '#E1F5EE',
-          fillOpacity: 0.4,
-        })
+          // 필지 경계에 맞게 자동 축척
+          const bounds = new kakao.maps.LatLngBounds()
+          path.forEach(p => bounds.extend(p))
+          map.setBounds(bounds, 40)
+        } else {
+          new kakao.maps.Marker({ map, position })
+        }
+      })
+    }, 100) // DOM 렌더링 후 실행
 
-        // 필지 경계에 맞게 자동 축척
-        const bounds = new kakao.maps.LatLngBounds()
-        path.forEach(p => bounds.extend(p))
-        map.setBounds(bounds, 40) // 40px 여백
-      } else {
-        // 폴리곤 없으면 핀 표시
-        new kakao.maps.Marker({ map, position })
-      }
-    })
+    return () => clearTimeout(timer)
   }, [coord, landData])
 
   // 공통 수집 함수

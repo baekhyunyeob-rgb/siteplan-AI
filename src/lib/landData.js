@@ -52,26 +52,25 @@ function parseLandUse(data) {
 }
 
 function parseLandChar(data) {
-  const item = data?.fields?.field?.[0]
+  // 실제 응답 구조: data.landCharacteristicss.field[0] (s 두개)
+  const item = data?.landCharacteristicss?.field?.[0]
   if (!item) return null
   return {
-    용도지역: item.prposAreaDstrcNm,
-    건폐율: item.bcRat ? `${item.bcRat}%` : null,
-    용적률: item.vlRat ? `${item.vlRat}%` : null,
-    지형높이: item.tpgrphHgCode ? `${item.tpgrphHgCode}` : null,
-    토지이용상황: item.landUseSittnNm,
+    용도지역: item.prposArea1Nm ?? null,
+    용도지역2: item.prposArea2Nm !== '지정되지않음' ? item.prposArea2Nm : null,
+    토지이용상황: item.ladUseSittnNm ?? null,
+    지형경사: item.tpgrphHgCodeNm ?? null,
+    지형형상: item.tpgrphFrmCodeNm ?? null,
+    도로접면: item.roadSideCodeNm ?? null,
+    공시지가: item.pblntfPclnd
+      ? `${Number(item.pblntfPclnd).toLocaleString()}원/㎡`
+      : null,
+    공시기준: item.stdrYear ? `${item.stdrYear}년 ${item.stdrMt}월` : null,
   }
 }
 
 function parseLandPrice(data) {
-  const item = data?.fields?.field?.[0]
-  if (!item) return null
-  return {
-    공시지가: item.pblntfPclnd
-      ? `${Number(item.pblntfPclnd).toLocaleString()}원/㎡`
-      : null,
-    기준연도: item.stdrYear,
-  }
+  return null // landchar에 공시지가 포함됨
 }
 
 function parseParcel(data) {
@@ -133,7 +132,7 @@ export async function collectAllLandData(pnu, lat, lng) {
     safe(() => vworld('landbasic', { pnu })),
     safe(() => vworld('landuse', { pnu })),
     safe(() => vworld('landchar', { pnu })),
-    safe(() => vworld('landprice', { pnu })),
+    safe(() => Promise.resolve(null)), // landprice → landchar에 포함
     safe(() => vworld('parcel', { pnu })),
     safe(() => building(pnu)),
     safe(() => farmmap(lat, lng)),
@@ -146,7 +145,7 @@ export async function collectAllLandData(pnu, lat, lng) {
     토지기본: parseLandBasic(basicRaw),
     토지이용계획: parseLandUse(useRaw),
     토지특성: parseLandChar(charRaw),
-    공시지가: parseLandPrice(priceRaw),
+    공시지가: null, // landchar에 포함됨
     필지경계: parseParcel(parcelRaw),
     건축물대장: parseBuilding(buildingRaw),
     토양정보: parseFarmmap(farmmapRaw),

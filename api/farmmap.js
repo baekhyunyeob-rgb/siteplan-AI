@@ -12,10 +12,10 @@ export default async function handler(req, res) {
   if (!lat || !lng) return res.status(400).json({ error: 'lat, lng required' })
 
   try {
-    // serviceKey는 encodeURIComponent 하지 않고 그대로 사용
+    // serviceKey encodeURIComponent 적용
     const url = `https://apis.data.go.kr/B552895/rest/farmmap/getFarmmapSoilAnalysisService` +
       `/getCoordinateBasedSoilAnalsInfo` +
-      `?serviceKey=${KEY}&lat=${lat}&lon=${lng}&numOfRows=1&pageNo=1&_type=json`
+      `?serviceKey=${encodeURIComponent(KEY)}&lat=${lat}&lon=${lng}&numOfRows=1&pageNo=1&_type=json`
 
     console.log(`[farmmap] lat=${lat} lng=${lng}`)
     const response = await fetch(url)

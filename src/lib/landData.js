@@ -43,12 +43,13 @@ function parseLandBasic(data) {
 }
 
 function parseLandUse(data) {
-  const items = data?.landUseInfoList?.landUseInfo
-  if (!items?.length) return null
-  return items.map(i => ({
-    용도지역: i.prposAreaDstrcNm,
-    저촉여부: i.cnflcAt === '1' ? '저촉' : '해당없음',
-  }))
+  // WFS 응답 구조: data.features[].properties
+  const features = data?.features
+  if (!features?.length) return null
+  return features.map(f => ({
+    지역지구: f.properties?.ugname ?? f.properties?.prpos_area_dstrc_nm ?? '확인 필요',
+    저촉여부: '저촉',
+  })).filter(i => i.지역지구 !== '확인 필요')
 }
 
 function parseLandChar(data) {
@@ -130,7 +131,7 @@ export async function collectAllLandData(pnu, lat, lng) {
     farmmapRaw,
   ] = await Promise.all([
     safe(() => vworld('landbasic', { pnu })),
-    safe(() => vworld('landuse', { pnu })),
+    safe(() => vworld('landuse', { pnu, lat, lng })),
     safe(() => vworld('landchar', { pnu })),
     safe(() => Promise.resolve(null)), // landprice → landchar에 포함
     safe(() => vworld('parcel', { pnu })),

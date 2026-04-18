@@ -31,9 +31,15 @@ export default async function handler(req, res) {
         `?key=${KEY}&pnu=${pnu}&format=json`
 
     } else if (action === 'landuse') {
-      // 토지이용계획: 용도지역지구 저촉여부
-      url = `https://api.vworld.kr/ned/data/ladfrlList` +
-        `?key=${KEY}&pnu=${pnu}&format=json`
+      // 토지이용계획: WFS 좌표 기반 용도지역지구 조회
+      // 개발제한구역, 농업진흥구역 등 중첩 지역지구 확인
+      const { lat, lng } = req.query
+      const delta = 0.0001
+      const bbox = `${parseFloat(lng)-delta},${parseFloat(lat)-delta},${parseFloat(lng)+delta},${parseFloat(lat)+delta}`
+      url = `https://api.vworld.kr/req/wfs` +
+        `?service=wfs&version=1.0.0&request=GetFeature` +
+        `&typeName=lt_c_uq111&bbox=${bbox},EPSG:4326` +
+        `&output=application/json&key=${KEY}`
 
     } else if (action === 'landchar') {
       // 토지특성: 용도지역·건폐율·용적률·지형높이

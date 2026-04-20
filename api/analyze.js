@@ -181,7 +181,7 @@ async function callGemini(KEY, systemPrompt, userPrompt, photos) {
     }
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${KEY}`
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEY}`
 
   const response = await fetch(url, {
     method: 'POST',

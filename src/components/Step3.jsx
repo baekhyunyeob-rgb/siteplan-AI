@@ -15,18 +15,18 @@ function loadKakaoMap() {
 
 const TIER_ITEMS = {
   free: [
-    { icon: '📍', text: '필지경계 지도' },
     { icon: '📋', text: '용도지역 · 건폐율 · 용적률' },
     { icon: '📐', text: '면적 · 지목 · 도로접면 · 지형' },
     { icon: '💰', text: '공시지가' },
-    { icon: '✅', text: '"이 땅에서 할 수 있는 것·없는 것" AI 요약' },
+    { icon: '✅', text: 'AI 요약 — 이 땅에서 할 수 있는 것·제한 사항' },
+    { icon: '🎁', text: '관련 보조금 참고 목록' },
   ],
   basic: [
     { icon: '📸', text: '현장 사진 AI 분석 (건물 상태·지형·접도)' },
     { icon: '🏗', text: '구현 방안 A · B · C 제안 + 장단점' },
     { icon: '⭐', text: '추천 방안 + 이유' },
     { icon: '💰', text: '개략 예산 범위 (±30~40% 오차 명시)' },
-    { icon: '📄', text: '설계사무소 지참용 기초 문서 PDF' },
+    { icon: '📄', text: '설계사무소 지참용 기초 문서' },
   ],
 }
 
@@ -40,6 +40,7 @@ const s = {
   dataRow: { display: 'flex', justifyContent: 'space-between', padding: '7px 0', fontSize: 12, borderBottom: '1px solid #F5F5F3' },
   btnRow: { display: 'flex', gap: 8 },
   backBtn: { flex: 1, padding: 14, borderRadius: 12, border: '1px solid #E8E8E8', background: '#fff', color: '#888', fontSize: 13, fontWeight: 500, cursor: 'pointer' },
+  restartBtn: { width: '100%', padding: 14, borderRadius: 12, border: '1px solid #E8E8E8', background: '#fff', color: '#555', fontSize: 13, fontWeight: 500, cursor: 'pointer' },
 }
 
 function DataRow({ label, value, color }) {
@@ -58,12 +59,8 @@ function TierCard({ selected, onSelect, tier, badge, badgeColor, badgeBg, title,
     <div
       onClick={() => onSelect(tier)}
       style={{
-        borderRadius: 14,
-        border: `2px solid ${isSelected ? borderColor : '#E8E8E8'}`,
-        overflow: 'hidden',
-        cursor: 'pointer',
-        transition: 'border-color 0.2s',
-        background: '#fff',
+        borderRadius: 14, border: `2px solid ${isSelected ? borderColor : '#E8E8E8'}`,
+        overflow: 'hidden', cursor: 'pointer', transition: 'border-color 0.2s', background: '#fff',
       }}
     >
       <div style={{ padding: '14px 16px 12px', background: isSelected ? headerBg : '#F7F7F5' }}>
@@ -86,8 +83,7 @@ function TierCard({ selected, onSelect, tier, badge, badgeColor, badgeBg, title,
       <div style={{ padding: '12px 16px' }}>
         {items.map((item, i) => (
           <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: isSelected ? '#333' : '#aaa', marginBottom: 6, lineHeight: 1.5 }}>
-            <span>{item.icon}</span>
-            <span>{item.text}</span>
+            <span>{item.icon}</span><span>{item.text}</span>
           </div>
         ))}
       </div>
@@ -96,9 +92,95 @@ function TierCard({ selected, onSelect, tier, badge, badgeColor, badgeBg, title,
   )
 }
 
-export default function Step3({ landData, purpose, requirements, tier, setTier, onBack, onNext }) {
+// ── free 분석 결과 표시 (Step3 내부에서 완결) ────────────────────
+function FreeResult({ result, landData, onRestart }) {
+  return (
+    <div style={s.wrap}>
+      <div style={s.card}>
+        <div style={s.cardHeader}>토지 기본정보</div>
+        <div style={s.cardBody}>
+          <DataRow label="주소" value={landData?.토지기본?.주소} />
+          <DataRow label="지목" value={landData?.토지기본?.지목} />
+          <DataRow label="면적" value={landData?.토지기본?.면적} />
+          <DataRow label="용도지역" value={landData?.토지특성?.용도지역} color="#0F6E56" />
+          <DataRow label="도로접면" value={landData?.토지특성?.도로접면} />
+          <DataRow label="지형경사" value={landData?.토지특성?.지형경사} />
+          <DataRow label="공시지가" value={landData?.토지특성?.공시지가} />
+        </div>
+      </div>
+
+      {result?.가능사항?.length > 0 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>✅ 이 땅에서 가능한 것</div>
+          <div style={s.cardBody}>
+            {result.가능사항.map((item, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: '#0F6E56', marginBottom: 6, lineHeight: 1.6 }}>
+                <span style={{ flexShrink: 0 }}>•</span><span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {result?.불가사항?.length > 0 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>❌ 제한되는 것</div>
+          <div style={s.cardBody}>
+            {result.불가사항.map((item, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: '#A32D2D', marginBottom: 6, lineHeight: 1.6 }}>
+                <span style={{ flexShrink: 0 }}>•</span><span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {result?.참고사항 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>📌 참고사항</div>
+          <div style={s.cardBody}>
+            <div style={{ fontSize: 12, color: '#555', lineHeight: 1.8 }}>{result.참고사항}</div>
+          </div>
+        </div>
+      )}
+
+      {result?.보조금?.length > 0 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>🎁 관련 보조금 참고</div>
+          <div style={s.cardBody}>
+            {result.보조금.map((item, i) => (
+              <div key={i} style={{ padding: '10px 12px', background: '#E1F5EE', borderRadius: 8, border: '1px solid #9FE1CB', marginBottom: 6 }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: '#085041' }}>{item.사업명}</div>
+                <div style={{ fontSize: 11, color: '#0F6E56', marginTop: 2 }}>{item.지원기관} · {item.신청조건}</div>
+              </div>
+            ))}
+            <div style={{ fontSize: 10, color: '#aaa', marginTop: 6 }}>* 보조금은 연도·지역별로 변경될 수 있으니 해당 기관에 직접 확인하세요.</div>
+          </div>
+        </div>
+      )}
+
+      {/* 2단계 업셀 */}
+      <div style={{ padding: '16px', background: '#FAEEDA', borderRadius: 14, border: '1px solid #FAC775' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#BA7517', marginBottom: 6 }}>현장 사진으로 더 자세한 분석을 원하시나요?</div>
+        <div style={{ fontSize: 11, color: '#BA7517', lineHeight: 1.7 }}>
+          2단계에서는 사진을 기반으로 방안 A·B·C와<br />개략 예산을 제안합니다. (9,900원)
+        </div>
+      </div>
+
+      <button style={s.restartBtn} onClick={onRestart}>← 새 현장 분석하기</button>
+    </div>
+  )
+}
+
+// ── 메인 Step3 ────────────────────────────────────────────────────
+export default function Step3({ landData, purpose, requirements, tier, setTier, onBack, onNext, onRestart }) {
   const mapRef = useRef(null)
   const mapInstance = useRef(null)
+
+  // free 분석 상태
+  const [freeLoading, setFreeLoading] = useState(false)
+  const [freeResult, setFreeResult] = useState(null)
+  const [freeError, setFreeError] = useState(null)
   const [paying, setPaying] = useState(false)
 
   useEffect(() => {
@@ -131,31 +213,45 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
     return () => clearTimeout(timer)
   }, [landData])
 
-  // ── 다음 버튼 클릭 ──────────────────────────────────────────────────────
-  // 💳 결제 처리는 processTierPayment() 함수 안에서 담당 (App.jsx)
-  // 나중에 실제 PG 연동 시 App.jsx의 processTierPayment 함수만 수정하면 됩니다
-  async function handleNext() {
-    if (!tier) return
+  // free 선택 후 "확인하기" 클릭 → AI 호출 → 결과 표시 (Step3에서 완결)
+  async function handleFreeAnalyze() {
+    setFreeLoading(true)
+    setFreeError(null)
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ landData, purpose, requirements, photos: [], tier: 'free' }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      setFreeResult(data)
+    } catch (e) {
+      setFreeError(e.message)
+    } finally {
+      setFreeLoading(false)
+    }
+  }
+
+  // basic 선택 후 → 결제 처리 → Step4로
+  async function handleBasicNext() {
     setPaying(true)
     try {
-      const ok = await processTierPayment(tier)
+      const ok = await processTierPayment('basic')
       if (ok) onNext()
     } finally {
       setPaying(false)
     }
   }
 
-  const basic = landData?.토지기본
-  const char = landData?.토지특성
-  const building = landData?.건축물대장
-
-  const nextLabel = () => {
-    if (paying) return '처리 중...'
-    if (!tier) return '단계를 선택해주세요'
-    if (tier === 'free') return '무료로 토지정보 확인 →'
-    if (tier === 'basic') return '9,900원으로 AI 분석 시작 →'
-    return '다음 →'
+  // free 결과 화면
+  if (freeResult) {
+    return <FreeResult result={freeResult} landData={landData} onRestart={onRestart} />
   }
+
+  const basic = landData?.토지기본
+  const char  = landData?.토지특성
+  const building = landData?.건축물대장
 
   return (
     <div style={s.wrap}>
@@ -220,23 +316,17 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
           <TierCard
             selected={tier} onSelect={setTier}
             tier="free"
-            badge="1단계 · 무료"
-            badgeColor="#0F6E56" badgeBg="#E1F5EE"
+            badge="1단계 · 무료" badgeColor="#0F6E56" badgeBg="#E1F5EE"
             borderColor="#0F6E56" headerBg="#E1F5EE"
-            title="토지 기본정보 확인"
-            price="FREE"
-            priceSub="주소 입력만으로"
+            title="토지 기본정보 확인" price="FREE" priceSub="주소 입력만으로"
             items={TIER_ITEMS.free}
           />
           <TierCard
             selected={tier} onSelect={setTier}
             tier="basic"
-            badge="2단계 · 유료"
-            badgeColor="#BA7517" badgeBg="#FAEEDA"
+            badge="2단계 · 유료" badgeColor="#BA7517" badgeBg="#FAEEDA"
             borderColor="#BA7517" headerBg="#FAEEDA"
-            title="현황진단 + 방향제안"
-            price="9,900원"
-            priceSub="설계사무소 상담 준비용"
+            title="현황진단 + 방향제안" price="9,900원" priceSub="설계사무소 상담 준비용"
             items={TIER_ITEMS.basic}
           />
         </div>
@@ -250,20 +340,50 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
         )}
       </div>
 
+      {/* 에러 */}
+      {freeError && (
+        <div style={{ padding: '10px 12px', background: '#FCEBEB', borderRadius: 8, fontSize: 12, color: '#A32D2D' }}>
+          ⚠ {freeError}
+        </div>
+      )}
+
+      {/* 버튼 */}
       <div style={s.btnRow}>
         <button style={s.backBtn} onClick={onBack}>← 이전</button>
-        <button
-          onClick={tier && !paying ? handleNext : undefined}
-          style={{
-            flex: 2, padding: 14, borderRadius: 12, border: 'none',
-            background: tier && !paying ? (tier === 'free' ? '#0F6E56' : '#BA7517') : '#ccc',
-            color: '#fff', fontSize: 13, fontWeight: 500,
-            cursor: tier && !paying ? 'pointer' : 'not-allowed',
-            transition: 'background 0.2s',
-          }}
-        >
-          {nextLabel()}
-        </button>
+
+        {tier === 'free' && (
+          <button
+            onClick={freeLoading ? undefined : handleFreeAnalyze}
+            style={{
+              flex: 2, padding: 14, borderRadius: 12, border: 'none',
+              background: freeLoading ? '#ccc' : '#0F6E56',
+              color: '#fff', fontSize: 13, fontWeight: 500,
+              cursor: freeLoading ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {freeLoading ? '분석 중...' : '토지정보 확인하기 →'}
+          </button>
+        )}
+
+        {tier === 'basic' && (
+          <button
+            onClick={paying ? undefined : handleBasicNext}
+            style={{
+              flex: 2, padding: 14, borderRadius: 12, border: 'none',
+              background: paying ? '#ccc' : '#BA7517',
+              color: '#fff', fontSize: 13, fontWeight: 500,
+              cursor: paying ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {paying ? '처리 중...' : '사진 업로드하기 →'}
+          </button>
+        )}
+
+        {!tier && (
+          <button style={{ flex: 2, padding: 14, borderRadius: 12, border: 'none', background: '#ccc', color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'not-allowed' }}>
+            단계를 선택해주세요
+          </button>
+        )}
       </div>
     </div>
   )

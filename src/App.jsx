@@ -13,7 +13,7 @@ const STEPS = ['주소', '요구사항', '정보확인', '자료업로드', '분
 // 현재는 항상 성공(true)을 반환 → 실제 결제 시 PG SDK 호출로 교체
 // ─────────────────────────────────────────────────────────────
 export async function processTierPayment(tier) {
-  if (tier === 'free') return true          // 무료: 결제 없음
+  if (tier === 'free') return true
 
   // TODO: 실제 결제 연동 시 아래 주석을 해제하고 구현
   // const amount = tier === 'basic' ? 9900 : 19900
@@ -26,7 +26,6 @@ export async function processTierPayment(tier) {
 export default function App() {
   const [step, setStep] = useState(1)
 
-  // 전체 데이터 상태
   const [address, setAddress] = useState('')
   const [coord, setCoord] = useState(null)
   const [landData, setLandData] = useState(null)
@@ -34,11 +33,22 @@ export default function App() {
   const [requirements, setRequirements] = useState({})
   const [photos, setPhotos] = useState([])
   const [surveyFiles, setSurveyFiles] = useState([])
-  // tier: 'free'(1단계 무료) | 'basic'(2단계 9,900) | 'premium'(3단계 19,900)
+  // tier: 'free'(1단계 무료) | 'basic'(2단계 9,900원)
   const [tier, setTier] = useState(null)
 
   const goNext = () => setStep(s => s + 1)
   const goBack = () => setStep(s => s - 1)
+  const goRestart = () => {
+    setStep(1)
+    setAddress('')
+    setCoord(null)
+    setLandData(null)
+    setPurpose(null)
+    setRequirements({})
+    setPhotos([])
+    setSurveyFiles([])
+    setTier(null)
+  }
 
   return (
     <div style={{
@@ -74,14 +84,13 @@ export default function App() {
           </div>
         </div>
 
-        {/* 단계 표시 */}
+        {/* 단계 표시 — free는 3단계, basic은 5단계 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {STEPS.map((label, i) => {
-            const s = i + 1
+          {(tier === 'free' ? [1,2,3] : [1,2,3,4,5]).map((s) => {
             const isActive = s === step
             const isDone = s < step
             return (
-              <div key={s} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <div key={s}>
                 <div style={{
                   width: isActive ? 24 : 8,
                   height: 6,
@@ -139,7 +148,8 @@ export default function App() {
             tier={tier}
             setTier={setTier}
             onBack={goBack}
-            onNext={goNext}
+            onNext={goNext}        // basic → Step4로
+            onRestart={goRestart}  // free 분석 완료 후 처음으로
           />
         )}
         {step === 4 && (
@@ -162,17 +172,7 @@ export default function App() {
             tier={tier}
             photos={photos}
             surveyFiles={surveyFiles}
-            onRestart={() => {
-              setStep(1)
-              setAddress('')
-              setCoord(null)
-              setLandData(null)
-              setPurpose(null)
-              setRequirements({})
-              setPhotos([])
-              setSurveyFiles([])
-              setTier(null)
-            }}
+            onRestart={goRestart}
           />
         )}
       </div>

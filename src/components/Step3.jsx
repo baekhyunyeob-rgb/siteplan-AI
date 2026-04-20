@@ -115,11 +115,12 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
   const basic    = landData?.토지기본
   const char     = landData?.토지특성
   const building = landData?.건축물대장
+  const hasData  = basic || char || building
 
   return (
     <div style={s.wrap}>
 
-      {/* 지도 */}
+      {/* ── 지도 ── */}
       {landData?.좌표
         ? <div style={{ height: 240, borderRadius: 14, overflow: 'hidden', border: '1px solid #E8E8E8' }}>
             <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
@@ -129,8 +130,8 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
           </div>
       }
 
-      {/* 공공데이터 — 수집되면 즉시 표시 */}
-      {(basic || char || building) && (
+      {/* ── 공공데이터 — API 수집되면 즉시 표시 ── */}
+      {hasData && (
         <div style={s.card}>
           <div style={s.cardHeader}>수집된 토지 정보</div>
           <div style={s.cardBody}>
@@ -170,13 +171,13 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
         </div>
       )}
 
-      {/* ── 하단 영역: 상태에 따라 교체 ── */}
+      {/* ── 하단 영역: aiState에 따라 교체 ── */}
 
-      {/* idle — 1단계 카드 */}
-      {aiState === 'idle' && (basic || char) && (
+      {/* idle → 1단계 카드 */}
+      {aiState === 'idle' && hasData && (
         <div style={{ borderRadius: 14, border: '2px solid #0F6E56', overflow: 'hidden', background: '#fff' }}>
           <div style={{ padding: '14px 16px 12px', background: '#E1F5EE' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: 10, fontWeight: 700, color: '#0F6E56', background: '#9FE1CB', display: 'inline-block', padding: '2px 8px', borderRadius: 20, marginBottom: 6 }}>
                   1단계 · 무료
@@ -209,7 +210,7 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
         </div>
       )}
 
-      {/* loading — 로딩 표시 */}
+      {/* loading → 로딩 표시 */}
       {aiState === 'loading' && (
         <div style={s.card}>
           <div style={s.cardBody}>
@@ -224,7 +225,7 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
         </div>
       )}
 
-      {/* done — AI 요약 결과 + 2단계 카드 */}
+      {/* done → AI 요약 결과 */}
       {aiState === 'done' && aiResult && (
         <>
           {aiResult.가능사항?.length > 0 && (
@@ -239,7 +240,6 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
               </div>
             </div>
           )}
-
           {aiResult.불가사항?.length > 0 && (
             <div style={s.card}>
               <div style={s.cardHeader}>❌ 제한되는 것</div>
@@ -252,7 +252,6 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
               </div>
             </div>
           )}
-
           {aiResult.참고사항 && (
             <div style={s.card}>
               <div style={s.cardHeader}>📌 참고사항</div>
@@ -261,7 +260,6 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
               </div>
             </div>
           )}
-
           {aiResult.보조금?.length > 0 && (
             <div style={s.card}>
               <div style={s.cardHeader}>🎁 관련 보조금 참고</div>
@@ -276,56 +274,60 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
               </div>
             </div>
           )}
-
-          {/* 2단계 카드 */}
-          <div style={{ borderRadius: 14, border: '2px solid #BA7517', overflow: 'hidden', background: '#fff' }}>
-            <div style={{ padding: '14px 16px 12px', background: '#FAEEDA' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#BA7517', background: '#FAD48A', display: 'inline-block', padding: '2px 8px', borderRadius: 20, marginBottom: 6 }}>
-                    2단계 · 유료
-                  </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#BA7517' }}>현황진단 + 방향제안</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: '#BA7517' }}>9,900원</div>
-                  <div style={{ fontSize: 10, color: '#aaa', marginTop: 2 }}>설계사무소 상담 준비용</div>
-                </div>
-              </div>
-            </div>
-            <div style={{ padding: '12px 16px' }}>
-              {[
-                { icon: '📸', text: '현장 사진 AI 분석 (건물 상태·지형·접도)' },
-                { icon: '🏗', text: '구현 방안 A · B · C 제안 + 장단점' },
-                { icon: '⭐', text: '추천 방안 + 이유' },
-                { icon: '💰', text: '개략 예산 범위 (±30~40% 오차 명시)' },
-                { icon: '📄', text: '설계사무소 지참용 기초 문서' },
-              ].map((item, i) => (
-                <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: '#333', marginBottom: 6, lineHeight: 1.5 }}>
-                  <span>{item.icon}</span><span>{item.text}</span>
-                </div>
-              ))}
-              <div style={{ marginTop: 10, padding: '8px 10px', background: '#FAEEDA', borderRadius: 8, fontSize: 11, color: '#BA7517' }}>
-                ⚠ 현장 사진 기반 참고자료입니다. 정확한 물량·예산은 드론 측량 후 확정됩니다.
-              </div>
-            </div>
-            <div style={{ padding: '0 16px 16px' }}>
-              <button
-                onClick={paying ? undefined : handleBasic}
-                style={{ width: '100%', padding: 13, borderRadius: 10, border: 'none', background: paying ? '#ccc' : '#BA7517', color: '#fff', fontSize: 13, fontWeight: 500, cursor: paying ? 'not-allowed' : 'pointer' }}
-              >
-                {paying ? '처리 중...' : '사진 업로드하고 AI 분석받기 →'}
-              </button>
-            </div>
-          </div>
         </>
       )}
 
-      {/* error */}
+      {/* error → 다시 시도 */}
       {aiState === 'error' && (
         <div style={{ padding: '12px 14px', background: '#F7F7F5', borderRadius: 10, border: '1px solid #E8E8E8', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 11, color: '#aaa' }}>AI 요약을 불러오지 못했습니다 — {aiError}</span>
-          <button onClick={runAiSummary} style={{ fontSize: 11, color: '#0F6E56', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 8, flexShrink: 0 }}>다시 시도</button>
+          <span style={{ fontSize: 11, color: '#aaa' }}>AI 요약 실패 — {aiError}</span>
+          <button onClick={runAiSummary} style={{ fontSize: 11, color: '#0F6E56', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 8, flexShrink: 0 }}>
+            다시 시도
+          </button>
+        </div>
+      )}
+
+      {/* ── 2단계 카드 — AI 분석 후에만 표시 ── */}
+      {(aiState === 'done' || aiState === 'error') && hasData && (
+        <div style={{ borderRadius: 14, border: '2px solid #BA7517', overflow: 'hidden', background: '#fff' }}>
+          <div style={{ padding: '14px 16px 12px', background: '#FAEEDA' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#BA7517', background: '#FAD48A', display: 'inline-block', padding: '2px 8px', borderRadius: 20, marginBottom: 6 }}>
+                  2단계 · 유료
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#BA7517' }}>현황진단 + 방향제안</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#BA7517' }}>9,900원</div>
+                <div style={{ fontSize: 10, color: '#aaa', marginTop: 2 }}>설계사무소 상담 준비용</div>
+              </div>
+            </div>
+          </div>
+          <div style={{ padding: '12px 16px' }}>
+            {[
+              { icon: '📸', text: '현장 사진 AI 분석 (건물 상태·지형·접도)' },
+              { icon: '🏗', text: '구현 방안 A · B · C 제안 + 장단점' },
+              { icon: '⭐', text: '추천 방안 + 이유' },
+              { icon: '💰', text: '개략 예산 범위 (±30~40% 오차 명시)' },
+              { icon: '📄', text: '설계사무소 지참용 기초 문서' },
+            ].map((item, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: '#333', marginBottom: 6, lineHeight: 1.5 }}>
+                <span>{item.icon}</span><span>{item.text}</span>
+              </div>
+            ))}
+            <div style={{ marginTop: 10, padding: '8px 10px', background: '#FAEEDA', borderRadius: 8, fontSize: 11, color: '#BA7517' }}>
+              ⚠ 현장 사진 기반 참고자료입니다. 정확한 물량·예산은 드론 측량 후 확정됩니다.
+            </div>
+          </div>
+          <div style={{ padding: '0 16px 16px' }}>
+            <button
+              onClick={paying ? undefined : handleBasic}
+              style={{ width: '100%', padding: 13, borderRadius: 10, border: 'none', background: paying ? '#ccc' : '#BA7517', color: '#fff', fontSize: 13, fontWeight: 500, cursor: paying ? 'not-allowed' : 'pointer' }}
+            >
+              {paying ? '처리 중...' : '사진 업로드하고 AI 분석받기 →'}
+            </button>
+          </div>
         </div>
       )}
 

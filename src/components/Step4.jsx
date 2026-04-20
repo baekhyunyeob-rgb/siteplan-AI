@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 
-// 목적별 필요 사진 목록
 const PHOTO_GUIDES = {
   농지정리: [
     { key: 'overview', label: '부지 전경', desc: '부지 전체가 보이도록 멀리서 촬영', required: true, example: '🌾' },
@@ -30,7 +29,6 @@ const s = {
   card: { background: '#fff', borderRadius: 14, border: '1px solid #E8E8E8', overflow: 'hidden' },
   cardHeader: { padding: '12px 16px 8px', fontSize: 11, fontWeight: 500, color: '#999', letterSpacing: '.04em', borderBottom: '1px solid #E8E8E8' },
   cardBody: { padding: '12px 16px' },
-
   photoItem: { marginBottom: 12, padding: '10px 12px', borderRadius: 10, border: '1px solid #E8E8E8', background: '#FAFAF8' },
   photoHeader: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 },
   photoEmoji: { fontSize: 20 },
@@ -46,34 +44,47 @@ const s = {
     cursor: 'pointer', fontSize: 12,
     color: hasFile ? '#0F6E56' : '#aaa',
   }),
-
-  surveyItem: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#F7F7F5', borderRadius: 8, border: '1px solid #E8E8E8', marginBottom: 6 },
-  surveyIcon: { width: 30, height: 30, borderRadius: 7, background: '#E6F1FB', border: '1px solid #85B7EB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  fileName: { fontSize: 12, fontWeight: 500 },
-  fileSub: { fontSize: 10, color: '#aaa' },
-  badgeDone: { fontSize: 10, padding: '3px 9px', borderRadius: 20, background: '#E1F5EE', color: '#0F6E56' },
-  badgeOpt: { fontSize: 10, padding: '3px 9px', borderRadius: 20, background: '#F7F7F5', color: '#aaa', border: '1px solid #E8E8E8' },
-
-  premiumBox: { background: '#E6F1FB', borderRadius: 12, padding: '14px 16px', border: '1px solid #85B7EB' },
-  premiumTitle: { fontSize: 13, fontWeight: 700, color: '#185FA5', marginBottom: 4 },
-  premiumDesc: { fontSize: 11, color: '#185FA5', marginBottom: 10 },
-  premiumBtn: (active) => ({
-    padding: '10px 16px', borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: 'pointer',
-    background: active ? '#185FA5' : '#fff',
-    color: active ? '#fff' : '#185FA5',
-    border: `1px solid #185FA5`,
-  }),
-
   btnRow: { display: 'flex', gap: 8 },
   backBtn: { flex: 1, padding: 14, borderRadius: 12, border: '1px solid #E8E8E8', background: '#fff', color: '#888', fontSize: 13, fontWeight: 500, cursor: 'pointer' },
   nextBtn: (on) => ({ flex: 2, padding: 14, borderRadius: 12, background: on ? '#0F6E56' : '#ccc', color: '#fff', fontSize: 13, fontWeight: 500, cursor: on ? 'pointer' : 'not-allowed', border: 'none' }),
 }
 
-export default function Step4({ purpose, photos, setPhotos, surveyFiles, setSurveyFiles, isPremium, setIsPremium, onBack, onNext }) {
+export default function Step4({ purpose, tier, photos, setPhotos, surveyFiles, setSurveyFiles, onBack, onNext }) {
+
+  // ── 1단계(무료): 사진 업로드 없이 바로 분석 ──────────────────────
+  if (tier === 'free') {
+    return (
+      <div style={s.wrap}>
+        <div style={s.card}>
+          <div style={s.cardHeader}>1단계 — 토지 기본정보</div>
+          <div style={s.cardBody}>
+            <div style={{ textAlign: 'center', padding: '24px 0' }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: '#0F6E56', marginBottom: 8 }}>
+                수집된 공간정보로 AI 요약을 생성합니다
+              </div>
+              <div style={{ fontSize: 12, color: '#888', lineHeight: 1.7 }}>
+                용도지역·건폐율·용적률·공시지가 등<br />
+                수집된 토지정보를 바탕으로<br />
+                "이 땅에서 할 수 있는 것·없는 것"을 정리합니다
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style={s.btnRow}>
+          <button style={s.backBtn} onClick={onBack}>← 이전</button>
+          <button style={s.nextBtn(true)} onClick={onNext}>분석 시작 →</button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── 2단계(유료): 사진 업로드 필요 ──────────────────────────────
   const guides = PHOTO_GUIDES[purpose] || PHOTO_GUIDES['신축']
   const requiredKeys = guides.filter(g => g.required).map(g => g.key)
   const uploadedKeys = photos.map(p => p.key)
   const allRequiredDone = requiredKeys.every(k => uploadedKeys.includes(k))
+  const remaining = requiredKeys.filter(k => !uploadedKeys.includes(k)).length
 
   function handlePhotoUpload(guide) {
     const input = document.createElement('input')
@@ -90,23 +101,14 @@ export default function Step4({ purpose, photos, setPhotos, surveyFiles, setSurv
     input.click()
   }
 
-  function handleSurveyUpload(type) {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = type === 'geotiff' ? '.tif,.tiff,.jpg,.jpeg' : '.las,.laz'
-    input.onchange = (e) => {
-      const file = e.target.files[0]
-      if (!file) return
-      setSurveyFiles(prev => {
-        const filtered = prev.filter(f => f.type !== type)
-        return [...filtered, { type, file, name: file.name }]
-      })
-    }
-    input.click()
-  }
-
   return (
     <div style={s.wrap}>
+
+      {/* 안내 */}
+      <div style={{ padding: '12px 14px', background: '#FAEEDA', borderRadius: 10, border: '1px solid #FAC775', fontSize: 12, color: '#BA7517', lineHeight: 1.7 }}>
+        📸 AI가 사진을 분석해 현황을 진단하고 방안 A·B·C를 제안합니다.<br />
+        <strong>필수</strong> 사진을 모두 올려주세요.
+      </div>
 
       {/* 사진 업로드 */}
       <div style={s.card}>
@@ -128,10 +130,7 @@ export default function Step4({ purpose, photos, setPhotos, surveyFiles, setSurv
                 </div>
                 <div style={s.photoDesc}>{guide.desc}</div>
                 <div style={s.photoUpload(!!uploaded)} onClick={() => handlePhotoUpload(guide)}>
-                  {uploaded
-                    ? <>✓ {uploaded.name}</>
-                    : <>📷 사진 선택하기</>
-                  }
+                  {uploaded ? <>✓ {uploaded.name}</> : <>📷 사진 선택하기</>}
                 </div>
               </div>
             )
@@ -139,47 +138,10 @@ export default function Step4({ purpose, photos, setPhotos, surveyFiles, setSurv
         </div>
       </div>
 
-      {/* 측량 데이터 (프리미엄) */}
-      <div style={s.premiumBox}>
-        <div style={s.premiumTitle}>📡 드론 측량 데이터 (프리미엄)</div>
-        <div style={s.premiumDesc}>
-          측량 데이터가 있으면 정밀 물량 산출과 설계도 초안이 추가됩니다. (19,900원)
-        </div>
-        <button style={s.premiumBtn(isPremium)} onClick={() => setIsPremium(!isPremium)}>
-          {isPremium ? '✓ 프리미엄 선택됨' : '프리미엄으로 업그레이드'}
-        </button>
-      </div>
-
-      {isPremium && (
-        <div style={s.card}>
-          <div style={s.cardHeader}>측량 데이터 업로드</div>
-          <div style={s.cardBody}>
-            {[
-              { type: 'geotiff', label: '정사영상', sub: 'GeoTIFF · JPG', icon: '🛰' },
-              { type: 'las', label: '포인트 클라우드', sub: 'LAS · LAZ', icon: '📡' },
-            ].map(item => {
-              const uploaded = surveyFiles.find(f => f.type === item.type)
-              return (
-                <div key={item.type} style={s.surveyItem} onClick={() => handleSurveyUpload(item.type)}>
-                  <div style={s.surveyIcon}>{item.icon}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={s.fileName}>{item.label}</div>
-                    <div style={s.fileSub}>{uploaded ? uploaded.name : item.sub}</div>
-                  </div>
-                  <span style={uploaded ? s.badgeDone : s.badgeOpt}>
-                    {uploaded ? '완료' : '선택'}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
       <div style={s.btnRow}>
         <button style={s.backBtn} onClick={onBack}>← 이전</button>
         <button style={s.nextBtn(allRequiredDone)} onClick={allRequiredDone ? onNext : undefined}>
-          {allRequiredDone ? '분석 시작 →' : `필수 사진 ${requiredKeys.length - uploadedKeys.filter(k => requiredKeys.includes(k)).length}장 더 필요`}
+          {allRequiredDone ? '분석 시작 →' : `필수 사진 ${remaining}장 더 필요`}
         </button>
       </div>
     </div>

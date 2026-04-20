@@ -7,18 +7,35 @@ import Step5 from './components/Step5'
 
 const STEPS = ['주소', '요구사항', '정보확인', '자료업로드', '분석결과']
 
+// ─────────────────────────────────────────────────────────────
+// 💳 결제 처리 함수 — 나중에 여기에 실제 PG 연동 코드를 넣으면 됩니다
+// tier: 'free' | 'basic' | 'premium'
+// 현재는 항상 성공(true)을 반환 → 실제 결제 시 PG SDK 호출로 교체
+// ─────────────────────────────────────────────────────────────
+export async function processTierPayment(tier) {
+  if (tier === 'free') return true          // 무료: 결제 없음
+
+  // TODO: 실제 결제 연동 시 아래 주석을 해제하고 구현
+  // const amount = tier === 'basic' ? 9900 : 19900
+  // const result = await PortOne.requestPayment({ amount, ... })
+  // return result.success
+
+  return true  // 현재는 결제 없이 통과
+}
+
 export default function App() {
   const [step, setStep] = useState(1)
 
   // 전체 데이터 상태
-  const [address, setAddress] = useState('')       // 입력 주소
-  const [coord, setCoord] = useState(null)         // 위경도
-  const [landData, setLandData] = useState(null)   // 공간정보
-  const [purpose, setPurpose] = useState(null)     // 목적
-  const [requirements, setRequirements] = useState({}) // 요구사항
-  const [photos, setPhotos] = useState([])         // 사진
-  const [surveyFiles, setSurveyFiles] = useState([]) // 측량 데이터
-  const [isPremium, setIsPremium] = useState(false)  // 과금 여부
+  const [address, setAddress] = useState('')
+  const [coord, setCoord] = useState(null)
+  const [landData, setLandData] = useState(null)
+  const [purpose, setPurpose] = useState(null)
+  const [requirements, setRequirements] = useState({})
+  const [photos, setPhotos] = useState([])
+  const [surveyFiles, setSurveyFiles] = useState([])
+  // tier: 'free'(1단계 무료) | 'basic'(2단계 9,900) | 'premium'(3단계 19,900)
+  const [tier, setTier] = useState(null)
 
   const goNext = () => setStep(s => s + 1)
   const goBack = () => setStep(s => s - 1)
@@ -119,6 +136,8 @@ export default function App() {
             landData={landData}
             purpose={purpose}
             requirements={requirements}
+            tier={tier}
+            setTier={setTier}
             onBack={goBack}
             onNext={goNext}
           />
@@ -126,12 +145,11 @@ export default function App() {
         {step === 4 && (
           <Step4
             purpose={purpose}
+            tier={tier}
             photos={photos}
             setPhotos={setPhotos}
             surveyFiles={surveyFiles}
             setSurveyFiles={setSurveyFiles}
-            isPremium={isPremium}
-            setIsPremium={setIsPremium}
             onBack={goBack}
             onNext={goNext}
           />
@@ -141,9 +159,9 @@ export default function App() {
             landData={landData}
             purpose={purpose}
             requirements={requirements}
+            tier={tier}
             photos={photos}
             surveyFiles={surveyFiles}
-            isPremium={isPremium}
             onRestart={() => {
               setStep(1)
               setAddress('')
@@ -153,7 +171,7 @@ export default function App() {
               setRequirements({})
               setPhotos([])
               setSurveyFiles([])
-              setIsPremium(false)
+              setTier(null)
             }}
           />
         )}

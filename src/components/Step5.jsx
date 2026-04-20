@@ -7,58 +7,22 @@ const GRADE_COLOR = {
   '위험': { bg: '#FCEBEB', color: '#A32D2D', dot: '#E24B4A' },
 }
 
-const PRIORITY_COLOR = {
-  '필수': { bg: '#FCEBEB', color: '#A32D2D' },
-  '권장': { bg: '#E6F1FB', color: '#0C447C' },
-  '선택': { bg: '#F7F7F5', color: '#888' },
-}
-
 const s = {
   wrap: { display: 'flex', flexDirection: 'column', gap: 12 },
   card: { background: '#fff', borderRadius: 14, border: '1px solid #E8E8E8', overflow: 'hidden' },
   cardHeader: { padding: '12px 16px 8px', fontSize: 11, fontWeight: 500, color: '#999', letterSpacing: '.04em', borderBottom: '1px solid #E8E8E8' },
   cardBody: { padding: '12px 16px' },
-
   loadingBox: { textAlign: 'center', padding: '48px 20px' },
   loadingIcon: { fontSize: 40, marginBottom: 12 },
   loadingTitle: { fontSize: 15, fontWeight: 500, color: '#0F6E56', marginBottom: 6 },
   loadingDesc: { fontSize: 12, color: '#aaa', lineHeight: 1.7 },
-
   errorBox: { background: '#FCEBEB', borderRadius: 10, padding: '16px', textAlign: 'center' },
-
-  gradeRow: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 },
-  gradeDot: { width: 12, height: 12, borderRadius: '50%', flexShrink: 0 },
-  gradeBadge: { fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 500 },
-  summary: { fontSize: 14, fontWeight: 500, color: '#1A1A1A', marginBottom: 10 },
-  findingItem: { display: 'flex', gap: 6, fontSize: 12, color: '#555', marginBottom: 5, lineHeight: 1.6 },
-  warningItem: { display: 'flex', gap: 6, fontSize: 12, color: '#BA7517', marginBottom: 5, lineHeight: 1.6 },
-
-  workItem: { padding: '10px 12px', borderRadius: 10, border: '1px solid #E8E8E8', background: '#FAFAF8', marginBottom: 6 },
-  workHeader: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 },
-  workNum: { width: 20, height: 20, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, background: '#1A1A1A', color: '#fff', flexShrink: 0 },
-  workName: { fontSize: 13, fontWeight: 500, flex: 1 },
-  workPriority: { fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 500 },
-  workDetail: { display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#888' },
-
-  costBox: { borderRadius: 10, overflow: 'hidden', border: '1px solid #E8E8E8' },
-  costTotal: { padding: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F7F7F5' },
-  costLbl: { fontSize: 11, color: '#888' },
-  costVal: { fontSize: 20, fontWeight: 700, color: '#185FA5' },
-  costNote: { padding: '8px 14px', fontSize: 10, color: '#aaa', borderTop: '1px solid #E8E8E8' },
-
-  subItem: { display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: '#E1F5EE', borderRadius: 8, border: '1px solid #9FE1CB', marginBottom: 6 },
-  subName: { fontSize: 12, fontWeight: 500, color: '#085041', flex: 1 },
-  subAmt: { fontSize: 13, fontWeight: 700, color: '#0F6E56' },
-
+  dataRow: { display: 'flex', justifyContent: 'space-between', padding: '7px 0', fontSize: 12, borderBottom: '1px solid #F5F5F3' },
   opinionBox: { background: '#F7F7F5', borderRadius: 10, padding: '14px', fontSize: 12, color: '#555', lineHeight: 1.8 },
-
-  pdfRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: '#fff', borderRadius: 14, border: '1px solid #E8E8E8', cursor: 'pointer' },
-  pdfIcon: { width: 36, height: 36, borderRadius: 8, background: '#E6F1FB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-
   restartBtn: { width: '100%', padding: 14, borderRadius: 12, border: '1px solid #E8E8E8', background: '#fff', color: '#555', fontSize: 13, fontWeight: 500, cursor: 'pointer' },
+  pdfRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: '#fff', borderRadius: 14, border: '1px solid #E8E8E8', cursor: 'pointer' },
 }
 
-// 사진 → base64 변환
 async function fileToBase64(file) {
   return new Promise((resolve) => {
     const reader = new FileReader()
@@ -70,53 +34,358 @@ async function fileToBase64(file) {
   })
 }
 
-export default function Step5({ landData, purpose, requirements, photos, surveyFiles, isPremium, onRestart }) {
+function DataRow({ label, value, color }) {
+  if (!value) return null
+  return (
+    <div style={s.dataRow}>
+      <span style={{ color: '#888' }}>{label}</span>
+      <span style={{ fontWeight: 500, color: color || '#1A1A1A' }}>{value}</span>
+    </div>
+  )
+}
+
+// ── 1단계 결과 UI ─────────────────────────────────────────────────
+function FreeResult({ result, landData, onRestart }) {
+  return (
+    <div style={s.wrap}>
+
+      {/* 토지 기본정보 */}
+      <div style={s.card}>
+        <div style={s.cardHeader}>토지 기본정보</div>
+        <div style={s.cardBody}>
+          <DataRow label="주소" value={landData?.토지기본?.주소} />
+          <DataRow label="지목" value={landData?.토지기본?.지목} />
+          <DataRow label="면적" value={landData?.토지기본?.면적} />
+          <DataRow label="용도지역" value={landData?.토지특성?.용도지역} color="#0F6E56" />
+          <DataRow label="도로접면" value={landData?.토지특성?.도로접면} />
+          <DataRow label="공시지가" value={landData?.토지특성?.공시지가} />
+        </div>
+      </div>
+
+      {/* 할 수 있는 것 / 없는 것 */}
+      {result?.가능사항?.length > 0 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>✅ 이 땅에서 할 수 있는 것</div>
+          <div style={s.cardBody}>
+            {result.가능사항.map((item, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: '#0F6E56', marginBottom: 6, lineHeight: 1.6 }}>
+                <span>•</span><span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {result?.불가사항?.length > 0 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>❌ 할 수 없는 것</div>
+          <div style={s.cardBody}>
+            {result.불가사항.map((item, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: '#A32D2D', marginBottom: 6, lineHeight: 1.6 }}>
+                <span>•</span><span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 참고사항 */}
+      {result?.참고사항 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>📌 참고사항</div>
+          <div style={s.cardBody}>
+            <div style={s.opinionBox}>{result.참고사항}</div>
+          </div>
+        </div>
+      )}
+
+      {/* 보조금 */}
+      {result?.보조금?.length > 0 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>🎁 관련 보조금 참고</div>
+          <div style={s.cardBody}>
+            {result.보조금.map((item, i) => (
+              <div key={i} style={{ padding: '10px 12px', background: '#E1F5EE', borderRadius: 8, border: '1px solid #9FE1CB', marginBottom: 6 }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: '#085041' }}>{item.사업명}</div>
+                <div style={{ fontSize: 11, color: '#0F6E56', marginTop: 2 }}>{item.지원기관} · {item.신청조건}</div>
+              </div>
+            ))}
+            <div style={{ fontSize: 10, color: '#aaa', marginTop: 8 }}>* 보조금은 연도별·지역별 변경될 수 있으니 해당 기관에 직접 확인하세요.</div>
+          </div>
+        </div>
+      )}
+
+      {/* 2단계 업셀 */}
+      <div style={{ padding: '16px', background: '#FAEEDA', borderRadius: 14, border: '1px solid #FAC775' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#BA7517', marginBottom: 6 }}>더 자세한 분석이 필요하신가요?</div>
+        <div style={{ fontSize: 11, color: '#BA7517', lineHeight: 1.7, marginBottom: 12 }}>
+          현장 사진을 올리면 AI가 방안 A·B·C를 제안하고<br />개략 예산을 산출합니다. (9,900원)
+        </div>
+        <div style={{ fontSize: 11, color: '#BA7517' }}>← 이전으로 돌아가 2단계를 선택하세요</div>
+      </div>
+
+      <button style={s.restartBtn} onClick={onRestart}>← 새 현장 분석하기</button>
+    </div>
+  )
+}
+
+// ── 2단계 결과 UI ─────────────────────────────────────────────────
+function BasicResult({ result, landData, onRestart }) {
+  const [selectedPlan, setSelectedPlan] = useState(null)
+
+  const grade = result?.현황진단?.종합등급 ?? '보통'
+  const gradeStyle = GRADE_COLOR[grade] ?? GRADE_COLOR['보통']
+  const plans = result?.방안 ?? []
+  const recommended = result?.추천방안
+
+  return (
+    <div style={s.wrap}>
+
+      {/* 현황 진단 */}
+      <div style={s.card}>
+        <div style={s.cardHeader}>현황 진단</div>
+        <div style={s.cardBody}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            <div style={{ width: 12, height: 12, borderRadius: '50%', background: gradeStyle.dot, flexShrink: 0 }} />
+            <div style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>
+              {landData?.토지기본?.주소} {landData?.토지기본?.지번}
+            </div>
+            <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 500, background: gradeStyle.bg, color: gradeStyle.color }}>
+              {grade}
+            </span>
+          </div>
+
+          {result?.현황진단?.한줄요약 && (
+            <div style={{ fontSize: 14, fontWeight: 500, color: '#1A1A1A', marginBottom: 10 }}>
+              {result.현황진단.한줄요약}
+            </div>
+          )}
+
+          {result?.현황진단?.주요발견?.map((item, i) => (
+            <div key={i} style={{ display: 'flex', gap: 6, fontSize: 12, color: '#555', marginBottom: 5, lineHeight: 1.6 }}>
+              <span>•</span><span>{item}</span>
+            </div>
+          ))}
+
+          {result?.현황진단?.주의사항?.length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              {result.현황진단.주의사항.map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: 6, fontSize: 12, color: '#BA7517', marginBottom: 5, lineHeight: 1.6 }}>
+                  <span>⚠</span><span>{item}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 방안 A · B · C */}
+      {plans.length > 0 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>구현 방안 비교</div>
+          <div style={s.cardBody}>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+              {plans.map((plan, i) => {
+                const label = ['A', 'B', 'C'][i]
+                const isRec = recommended === label
+                const isActive = selectedPlan === i
+                return (
+                  <div
+                    key={i}
+                    onClick={() => setSelectedPlan(isActive ? null : i)}
+                    style={{
+                      flex: 1, padding: '10px 8px', borderRadius: 10, textAlign: 'center',
+                      border: `2px solid ${isActive ? '#0F6E56' : isRec ? '#BA7517' : '#E8E8E8'}`,
+                      background: isActive ? '#E1F5EE' : isRec ? '#FAEEDA' : '#F7F7F5',
+                      cursor: 'pointer', transition: 'all 0.2s',
+                    }}
+                  >
+                    <div style={{ fontSize: 16, fontWeight: 700, color: isActive ? '#0F6E56' : isRec ? '#BA7517' : '#555' }}>
+                      방안 {label}
+                    </div>
+                    <div style={{ fontSize: 10, color: isRec ? '#BA7517' : '#aaa', marginTop: 2 }}>
+                      {isRec ? '⭐ 추천' : plan.방향?.substring(0, 8) + '...' }
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* 선택된 방안 상세 */}
+            {selectedPlan !== null && plans[selectedPlan] && (() => {
+              const plan = plans[selectedPlan]
+              const label = ['A', 'B', 'C'][selectedPlan]
+              const isRec = recommended === label
+              return (
+                <div style={{ padding: '14px', background: '#F7F7F5', borderRadius: 10, border: `1px solid ${isRec ? '#FAC775' : '#E8E8E8'}` }}>
+                  {isRec && (
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#BA7517', marginBottom: 6 }}>⭐ 추천 방안</div>
+                  )}
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A', marginBottom: 8 }}>{plan.방향}</div>
+                  <div style={{ fontSize: 12, color: '#555', marginBottom: 10, lineHeight: 1.7 }}>{plan.설명}</div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ flex: 1, padding: '10px', background: '#E1F5EE', borderRadius: 8 }}>
+                      <div style={{ fontSize: 10, color: '#0F6E56', marginBottom: 4 }}>장점</div>
+                      {plan.장점?.map((p, i) => (
+                        <div key={i} style={{ fontSize: 11, color: '#0F6E56', marginBottom: 3 }}>✓ {p}</div>
+                      ))}
+                    </div>
+                    <div style={{ flex: 1, padding: '10px', background: '#FCEBEB', borderRadius: 8 }}>
+                      <div style={{ fontSize: 10, color: '#A32D2D', marginBottom: 4 }}>단점</div>
+                      {plan.단점?.map((p, i) => (
+                        <div key={i} style={{ fontSize: 11, color: '#A32D2D', marginBottom: 3 }}>• {p}</div>
+                      ))}
+                    </div>
+                  </div>
+                  {plan.예산하한 && (
+                    <div style={{ marginTop: 10, padding: '8px 12px', background: '#fff', borderRadius: 8, border: '1px solid #E8E8E8', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 11, color: '#888' }}>개략 예산</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#185FA5' }}>
+                        {plan.예산하한?.toLocaleString()}만 ~ {plan.예산상한?.toLocaleString()}만원
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+
+            {selectedPlan === null && (
+              <div style={{ textAlign: 'center', fontSize: 12, color: '#aaa', padding: '12px 0' }}>
+                방안을 탭해서 상세 내용을 확인하세요
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 추천 방안 요약 */}
+      {result?.추천이유 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>⭐ 추천 방안 {recommended} — 이유</div>
+          <div style={s.cardBody}>
+            <div style={s.opinionBox}>{result.추천이유}</div>
+          </div>
+        </div>
+      )}
+
+      {/* 총 예산 */}
+      {result?.총예산 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>개략 예산 (추천 방안 기준)</div>
+          <div style={s.cardBody}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: '#F7F7F5', borderRadius: 10 }}>
+              <span style={{ fontSize: 11, color: '#888' }}>총 예상 비용</span>
+              <span style={{ fontSize: 20, fontWeight: 700, color: '#185FA5' }}>
+                {result.총예산.하한?.toLocaleString()}만 ~ {result.총예산.상한?.toLocaleString()}만원
+              </span>
+            </div>
+            <div style={{ fontSize: 10, color: '#aaa', marginTop: 8 }}>
+              {result.총예산.비고 ?? '현장 사진 기반 참고치입니다. ±30~40% 오차가 있을 수 있으며, 정확한 견적은 드론 측량 후 확정됩니다.'}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 보조금 */}
+      {result?.보조금?.length > 0 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>🎁 보조금 매칭</div>
+          <div style={s.cardBody}>
+            {result.보조금.map((item, i) => (
+              <div key={i} style={{ padding: '10px 12px', background: '#E1F5EE', borderRadius: 8, border: '1px solid #9FE1CB', marginBottom: 6 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: '#085041' }}>{item.사업명}</div>
+                    <div style={{ fontSize: 10, color: '#0F6E56', marginTop: 2 }}>{item.지원기관} · {item.신청조건}</div>
+                  </div>
+                  {item.최대지원액 && (
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#0F6E56' }}>최대 {item.최대지원액?.toLocaleString()}만</span>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div style={{ fontSize: 10, color: '#aaa', marginTop: 8 }}>* 보조금은 연도별·지역별 변경될 수 있으니 해당 기관에 직접 확인하세요.</div>
+          </div>
+        </div>
+      )}
+
+      {/* 전문가 의견 */}
+      {result?.전문가의견 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>전문가 의견</div>
+          <div style={s.cardBody}>
+            <div style={s.opinionBox}>{result.전문가의견}</div>
+          </div>
+        </div>
+      )}
+
+      {/* 면책 */}
+      <div style={{ padding: '12px 14px', background: '#F7F7F5', borderRadius: 10, border: '1px solid #E8E8E8', fontSize: 11, color: '#aaa', lineHeight: 1.7 }}>
+        본 문서는 현장 사진 기반 AI 분석 참고자료이며, 설계사무소 상담 준비용입니다. 정확한 물량·예산은 드론 측량 후 확정됩니다.
+      </div>
+
+      {/* PDF */}
+      <div style={s.pdfRow}>
+        <div style={{ width: 36, height: 36, borderRadius: 8, background: '#E6F1FB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#185FA5" strokeWidth="1.3">
+            <rect x="3" y="1" width="12" height="16" rx="2" />
+            <path d="M6 6h6M6 9h6M6 12h4" />
+          </svg>
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 500 }}>설계사무소 지참용 PDF</div>
+          <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>현황진단·방안비교·보조금 포함 (준비 중)</div>
+        </div>
+        <span style={{ color: '#aaa', fontSize: 18 }}>↓</span>
+      </div>
+
+      <button style={s.restartBtn} onClick={onRestart}>← 새 현장 분석하기</button>
+    </div>
+  )
+}
+
+// ── 메인 Step5 ────────────────────────────────────────────────────
+export default function Step5({ landData, purpose, requirements, tier, photos, surveyFiles, onRestart }) {
   const [loading, setLoading] = useState(true)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [loadingStep, setLoadingStep] = useState(0)
 
-  const loadingMessages = [
-    '공간정보를 분석하고 있습니다...',
-    '현장 사진을 검토하고 있습니다...',
-    '공사 범위를 산출하고 있습니다...',
-    '보조금 정보를 확인하고 있습니다...',
-    '보고서를 작성하고 있습니다...',
-  ]
+  const loadingMessages = tier === 'free'
+    ? ['공간정보를 분석하고 있습니다...', '법적 현황을 정리하고 있습니다...', '보고서를 작성하고 있습니다...']
+    : ['현장 사진을 분석하고 있습니다...', '건물 상태를 진단하고 있습니다...', '방안 A·B·C를 구성하고 있습니다...', '예산을 산출하고 있습니다...', '보고서를 작성하고 있습니다...']
 
   useEffect(() => {
-    // 로딩 메시지 순환
     const interval = setInterval(() => {
       setLoadingStep(s => (s + 1) % loadingMessages.length)
     }, 2000)
-
     analyze().finally(() => clearInterval(interval))
     return () => clearInterval(interval)
   }, [])
 
   async function analyze() {
     try {
-      // 사진 → base64 변환
-      const photoData = await Promise.all(
-        photos.map(async (p) => {
-          if (p.file) {
-            const { base64, mimeType } = await fileToBase64(p.file)
-            return { key: p.key, label: p.label, base64, mimeType }
-          }
-          return null
-        })
-      ).then(arr => arr.filter(Boolean))
+      let photoData = []
+      if (tier === 'basic' && photos.length > 0) {
+        photoData = await Promise.all(
+          photos.map(async (p) => {
+            if (p.file) {
+              const reader = new FileReader()
+              const base64 = await new Promise(res => {
+                reader.onload = e => res(e.target.result.split(',')[1])
+                reader.readAsDataURL(p.file)
+              })
+              return { key: p.key, label: p.label, base64, mimeType: p.file.type }
+            }
+            return null
+          })
+        ).then(arr => arr.filter(Boolean))
+      }
 
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          landData,
-          purpose,
-          requirements,
-          photos: photoData,
-          isPremium,
-        })
+        body: JSON.stringify({ landData, purpose, requirements, photos: photoData, tier }),
       })
 
       const data = await res.json()
@@ -129,18 +398,15 @@ export default function Step5({ landData, purpose, requirements, photos, surveyF
     }
   }
 
-  // 로딩 화면
   if (loading) {
     return (
       <div style={s.wrap}>
         <div style={s.card}>
           <div style={s.cardBody}>
             <div style={s.loadingBox}>
-              <div style={s.loadingIcon}>🤖</div>
-              <div style={s.loadingTitle}>AI 분석 중...</div>
-              <div style={s.loadingDesc}>
-                {loadingMessages[loadingStep]}
-              </div>
+              <div style={s.loadingIcon}>{tier === 'free' ? '📋' : '🤖'}</div>
+              <div style={s.loadingTitle}>{tier === 'free' ? '토지정보 분석 중...' : 'AI 분석 중...'}</div>
+              <div style={s.loadingDesc}>{loadingMessages[loadingStep]}</div>
             </div>
           </div>
         </div>
@@ -148,7 +414,6 @@ export default function Step5({ landData, purpose, requirements, photos, surveyF
     )
   }
 
-  // 에러 화면
   if (error) {
     return (
       <div style={s.wrap}>
@@ -166,139 +431,9 @@ export default function Step5({ landData, purpose, requirements, photos, surveyF
     )
   }
 
-  const grade = result?.현황진단?.종합등급 ?? '보통'
-  const gradeStyle = GRADE_COLOR[grade] ?? GRADE_COLOR['보통']
+  if (tier === 'free') {
+    return <FreeResult result={result} landData={landData} onRestart={onRestart} />
+  }
 
-  return (
-    <div style={s.wrap}>
-
-      {/* 현황 진단 */}
-      <div style={s.card}>
-        <div style={s.cardHeader}>현황 분석</div>
-        <div style={s.cardBody}>
-          <div style={s.gradeRow}>
-            <div style={{ ...s.gradeDot, background: gradeStyle.dot }} />
-            <div style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>
-              {landData?.토지기본?.주소} {landData?.토지기본?.지번}
-            </div>
-            <span style={{ ...s.gradeBadge, background: gradeStyle.bg, color: gradeStyle.color }}>
-              {grade}
-            </span>
-          </div>
-
-          {result?.현황진단?.한줄요약 && (
-            <div style={s.summary}>{result.현황진단.한줄요약}</div>
-          )}
-
-          {result?.현황진단?.주요발견?.map((item, i) => (
-            <div key={i} style={s.findingItem}>
-              <span>•</span><span>{item}</span>
-            </div>
-          ))}
-
-          {result?.현황진단?.주의사항?.length > 0 && (
-            <div style={{ marginTop: 8 }}>
-              {result.현황진단.주의사항.map((item, i) => (
-                <div key={i} style={s.warningItem}>
-                  <span>⚠</span><span>{item}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 공사 범위 */}
-      {result?.공사범위?.length > 0 && (
-        <div style={s.card}>
-          <div style={s.cardHeader}>공사 우선순위</div>
-          <div style={s.cardBody}>
-            {result.공사범위.map((item, i) => {
-              const pc = PRIORITY_COLOR[item.우선도] ?? PRIORITY_COLOR['선택']
-              return (
-                <div key={i} style={s.workItem}>
-                  <div style={s.workHeader}>
-                    <div style={s.workNum}>{item.순위}</div>
-                    <div style={s.workName}>{item.공종}</div>
-                    <span style={{ ...s.workPriority, background: pc.bg, color: pc.color }}>
-                      {item.우선도}
-                    </span>
-                  </div>
-                  <div style={s.workDetail}>
-                    <span>{item.수량}</span>
-                    <span style={{ fontWeight: 500, color: pc.color }}>
-                      {item.예상금액하한?.toLocaleString()}만~{item.예상금액상한?.toLocaleString()}만
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 예상 공사비 */}
-      {result?.총예상공사비 && (
-        <div style={s.card}>
-          <div style={s.cardHeader}>예상 공사비</div>
-          <div style={s.cardBody}>
-            <div style={s.costBox}>
-              <div style={s.costTotal}>
-                <span style={s.costLbl}>총 예상 비용</span>
-                <span style={s.costVal}>
-                  {result.총예상공사비.하한?.toLocaleString()}만~{result.총예상공사비.상한?.toLocaleString()}만
-                </span>
-              </div>
-              <div style={s.costNote}>{result.총예상공사비.비고}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 보조금 */}
-      {result?.보조금?.length > 0 && (
-        <div style={s.card}>
-          <div style={s.cardHeader}>보조금 매칭</div>
-          <div style={s.cardBody}>
-            {result.보조금.map((item, i) => (
-              <div key={i} style={s.subItem}>
-                <div style={{ flex: 1 }}>
-                  <div style={s.subName}>{item.사업명}</div>
-                  <div style={{ fontSize: 10, color: '#0F6E56' }}>{item.지원기관} · {item.신청조건}</div>
-                </div>
-                <span style={s.subAmt}>최대 {item.최대지원액?.toLocaleString()}만</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 전문가 의견 */}
-      {result?.전문가의견 && (
-        <div style={s.card}>
-          <div style={s.cardHeader}>전문가 의견</div>
-          <div style={s.cardBody}>
-            <div style={s.opinionBox}>{result.전문가의견}</div>
-          </div>
-        </div>
-      )}
-
-      {/* PDF 다운로드 */}
-      <div style={s.pdfRow}>
-        <div style={s.pdfIcon}>
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#185FA5" strokeWidth="1.3">
-            <rect x="3" y="1" width="12" height="16" rx="2" />
-            <path d="M6 6h6M6 9h6M6 12h4" />
-          </svg>
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 500 }}>시공자용 리포트 PDF</div>
-          <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>현황·물량·보조금 포함</div>
-        </div>
-        <span style={{ color: '#aaa', fontSize: 18 }}>↓</span>
-      </div>
-
-      <button style={s.restartBtn} onClick={onRestart}>← 새 현장 분석하기</button>
-    </div>
-  )
+  return <BasicResult result={result} landData={landData} onRestart={onRestart} />
 }

@@ -157,7 +157,7 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
                 <DataRow label="공시기준"     value={char.공시기준} />
               </div>
             )}
-            {building && (
+            {building ? (
               <div style={s.section}>
                 <div style={s.sectionTitle}>건축물 현황</div>
                 <DataRow label="주용도"     value={building.주용도} />
@@ -165,6 +165,11 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
                 <DataRow label="사용승인일" value={building.사용승인일} />
                 <DataRow label="건축면적"   value={building.건축면적} />
                 <DataRow label="연면적"     value={building.연면적} />
+              </div>
+            ) : (
+              <div style={s.section}>
+                <div style={s.sectionTitle}>건축물 현황</div>
+                <div style={{ fontSize: 12, color: '#aaa', padding: '6px 0' }}>건축물대장 없음 (나대지)</div>
               </div>
             )}
           </div>

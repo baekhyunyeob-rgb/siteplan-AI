@@ -172,7 +172,7 @@ ${photos?.map(p => `- ${p.label}: ${p.key}`).join('\n') ?? ''}
 // Gemini API 호출 공통 함수
 // ─────────────────────────────────────────────────────────────────
 async function callGemini(KEY, systemPrompt, userPrompt, photos) {
-  const parts = [{ text: userPrompt }]
+  const parts = [{ text: `${systemPrompt}\n\n${userPrompt}` }]
 
   // 사진 첨부 (2단계만)
   for (const photo of photos) {
@@ -181,13 +181,12 @@ async function callGemini(KEY, systemPrompt, userPrompt, photos) {
     }
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEY}`
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${KEY}`
 
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      system_instruction: { parts: [{ text: systemPrompt }] },
       contents: [{ role: 'user', parts }],
       generationConfig: { temperature: 0.3, maxOutputTokens: 3000 },
     })

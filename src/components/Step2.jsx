@@ -122,7 +122,13 @@ export default function Step2({ address, coord, purpose, setPurpose, requirement
           <div style={s.purposeRow}>
             {['농지정리', '신축', '리모델링'].map(p => (
               <div key={p} style={s.purposeChip(purpose === p)} onClick={() => setPurpose(p)}>
-                {p === '농지정리' ? '농지정리\n부지조성' : p === '신축' ? '신축' : '리모델링\n증축'}
+                {p === '농지정리' ? (
+                  <><span>농지정리</span><span>부지조성</span></>
+                ) : p === '신축' ? (
+                  <span>신축</span>
+                ) : (
+                  <><span>리모델링</span><span>증축</span></>
+                )}
               </div>
             ))}
           </div>

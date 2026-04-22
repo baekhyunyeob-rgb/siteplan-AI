@@ -34,6 +34,100 @@ async function fileToBase64(file) {
   })
 }
 
+// PDF 다운로드 — 텍스트 기반 HTML → 새 창 인쇄
+function downloadPDF(result, landData) {
+  const addr = `${landData?.토지기본?.주소 ?? ''} ${landData?.토지기본?.지번 ?? ''}`
+  const date = new Date().toLocaleDateString('ko-KR')
+  const plans = result?.방안 ?? []
+  const recommended = result?.추천방안
+
+  const planRows = plans.map((p, i) => {
+    const label = ['A', 'B', 'C'][i]
+    const isRec = recommended === label
+    return `
+      <div style="border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:10px;${isRec ? 'border-color:#BA7517;background:#FFFDF5' : ''}">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <strong>방안 ${label}${isRec ? ' ⭐ 추천' : ''}</strong>
+          <span style="color:#185FA5;font-weight:600">${(p.예산하한 ?? 0).toLocaleString()}만 ~ ${(p.예산상한 ?? 0).toLocaleString()}만원</span>
+        </div>
+        <div style="font-size:13px;color:#333;margin-bottom:8px">${p.방향}</div>
+        <div style="font-size:12px;color:#555;margin-bottom:8px">${p.설명}</div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1;background:#F0FBF6;padding:8px;border-radius:6px">
+            <div style="font-size:11px;color:#0F6E56;margin-bottom:4px">장점</div>
+            ${(p.장점 ?? []).map(t => `<div style="font-size:11px">✓ ${t}</div>`).join('')}
+          </div>
+          <div style="flex:1;background:#FEF2F2;padding:8px;border-radius:6px">
+            <div style="font-size:11px;color:#A32D2D;margin-bottom:4px">단점</div>
+            ${(p.단점 ?? []).map(t => `<div style="font-size:11px">• ${t}</div>`).join('')}
+          </div>
+        </div>
+      </div>`
+  }).join('')
+
+  const subsidyRows = (result?.보조금 ?? []).map(s =>
+    `<div style="padding:8px 12px;background:#F0FBF6;border-radius:6px;margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between">
+        <strong style="font-size:12px">${s.사업명}</strong>
+        ${s.최대지원액 ? `<span style="color:#0F6E56;font-weight:600">최대 ${s.최대지원액.toLocaleString()}만원</span>` : ''}
+      </div>
+      <div style="font-size:11px;color:#555;margin-top:2px">${s.지원기관} · ${s.신청조건}</div>
+    </div>`
+  ).join('')
+
+  const html = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
+  <title>SiteplanAI 분석 리포트</title>
+  <style>
+    body{font-family:'Malgun Gothic',sans-serif;max-width:720px;margin:0 auto;padding:32px;color:#1A1A1A;font-size:13px;line-height:1.6}
+    h1{font-size:22px;color:#0F6E56;margin-bottom:4px}
+    h2{font-size:15px;color:#333;border-bottom:2px solid #0F6E56;padding-bottom:6px;margin:24px 0 12px}
+    .meta{color:#888;font-size:12px;margin-bottom:24px}
+    .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+    .row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F0F0EE;font-size:12px}
+    .disclaimer{margin-top:24px;padding:10px;background:#F7F7F5;border-radius:6px;font-size:11px;color:#888}
+    @media print{body{padding:16px}}
+  </style></head><body>
+  <h1>SiteplanAI 현장 분석 리포트</h1>
+  <div class="meta">📍 ${addr} &nbsp;|&nbsp; 작성일: ${date} &nbsp;|&nbsp; 본 문서는 설계사무소 상담 준비용 참고자료입니다</div>
+
+  <h2>현황 진단</h2>
+  <div style="margin-bottom:8px">
+    <span class="badge" style="background:#FAEEDA;color:#BA7517">${result?.현황진단?.종합등급 ?? '보통'}</span>
+    <strong style="margin-left:10px">${result?.현황진단?.한줄요약 ?? ''}</strong>
+  </div>
+  ${(result?.현황진단?.주요발견 ?? []).map(t => `<div style="font-size:12px;color:#555;margin-bottom:4px">• ${t}</div>`).join('')}
+  ${(result?.현황진단?.주의사항 ?? []).map(t => `<div style="font-size:12px;color:#BA7517;margin-bottom:4px">⚠ ${t}</div>`).join('')}
+
+  <h2>구현 방안 비교</h2>
+  ${planRows}
+
+  ${result?.추천이유 ? `
+  <h2>추천 방안 ${recommended} — 이유</h2>
+  <div style="padding:12px;background:#F7F7F5;border-radius:8px;font-size:12px;color:#555">${result.추천이유}</div>` : ''}
+
+  ${result?.총예산 ? `
+  <h2>개략 예산 (추천 방안 기준)</h2>
+  <div style="padding:12px;background:#EFF6FF;border-radius:8px;display:flex;justify-content:space-between;align-items:center">
+    <span>총 예상 비용</span>
+    <strong style="font-size:18px;color:#185FA5">${(result.총예산.하한 ?? 0).toLocaleString()}만 ~ ${(result.총예산.상한 ?? 0).toLocaleString()}만원</strong>
+  </div>
+  <div style="font-size:11px;color:#aaa;margin-top:6px">${result.총예산.비고 ?? ''}</div>` : ''}
+
+  ${subsidyRows ? `<h2>보조금 참고</h2>${subsidyRows}` : ''}
+
+  ${result?.전문가의견 ? `
+  <h2>전문가 의견</h2>
+  <div style="padding:12px;background:#F7F7F5;border-radius:8px;font-size:12px;color:#555">${result.전문가의견}</div>` : ''}
+
+  <div class="disclaimer">본 문서는 현장 사진 기반 AI 분석 참고자료이며, 설계사무소 상담 준비용입니다. 정확한 물량·예산은 드론 측량 후 확정됩니다. 보조금은 연도·지역별로 변경될 수 있으니 해당 기관에 직접 확인하세요.</div>
+  </body></html>`
+
+  const w = window.open('', '_blank')
+  w.document.write(html)
+  w.document.close()
+  setTimeout(() => w.print(), 500)
+}
+
 function DataRow({ label, value, color }) {
   if (!value) return null
   return (
@@ -195,16 +289,16 @@ function BasicResult({ result, landData, onRestart }) {
                     onClick={() => setSelectedPlan(isActive ? null : i)}
                     style={{
                       flex: 1, padding: '10px 8px', borderRadius: 10, textAlign: 'center',
-                      border: `2px solid ${isActive ? '#0F6E56' : isRec ? '#BA7517' : '#E8E8E8'}`,
-                      background: isActive ? '#E1F5EE' : isRec ? '#FAEEDA' : '#F7F7F5',
+                      border: `2px solid ${isActive ? '#0F6E56' : '#E8E8E8'}`,
+                      background: isActive ? '#E1F5EE' : '#F7F7F5',
                       cursor: 'pointer', transition: 'all 0.2s',
                     }}
                   >
-                    <div style={{ fontSize: 16, fontWeight: 700, color: isActive ? '#0F6E56' : isRec ? '#BA7517' : '#555' }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: isActive ? '#0F6E56' : '#555' }}>
                       방안 {label}
                     </div>
                     <div style={{ fontSize: 10, color: isRec ? '#BA7517' : '#aaa', marginTop: 2 }}>
-                      {isRec ? '⭐ 추천' : plan.방향?.substring(0, 8) + '...' }
+                      {isRec ? '⭐ 추천' : plan.방향?.substring(0, 8) + '...'}
                     </div>
                   </div>
                 )
@@ -325,7 +419,7 @@ function BasicResult({ result, landData, onRestart }) {
       </div>
 
       {/* PDF */}
-      <div style={s.pdfRow}>
+      <div style={s.pdfRow} onClick={() => downloadPDF(result, landData)}>
         <div style={{ width: 36, height: 36, borderRadius: 8, background: '#E6F1FB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#185FA5" strokeWidth="1.3">
             <rect x="3" y="1" width="12" height="16" rx="2" />
@@ -334,9 +428,9 @@ function BasicResult({ result, landData, onRestart }) {
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 500 }}>설계사무소 지참용 PDF</div>
-          <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>현황진단·방안비교·보조금 포함 (준비 중)</div>
+          <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>현황진단·방안비교·보조금 포함</div>
         </div>
-        <span style={{ color: '#aaa', fontSize: 18 }}>↓</span>
+        <span style={{ color: '#185FA5', fontSize: 18 }}>↓</span>
       </div>
 
       <button style={s.restartBtn} onClick={onRestart}>← 새 현장 분석하기</button>

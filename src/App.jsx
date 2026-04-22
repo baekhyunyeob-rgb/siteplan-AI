@@ -156,10 +156,9 @@ export default function App() {
           <Step4
             purpose={purpose}
             tier={tier}
+            requirements={requirements}
             photos={photos}
             setPhotos={setPhotos}
-            surveyFiles={surveyFiles}
-            setSurveyFiles={setSurveyFiles}
             onBack={goBack}
             onNext={goNext}
           />

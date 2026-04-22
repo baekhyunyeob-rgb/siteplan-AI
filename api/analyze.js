@@ -102,8 +102,8 @@ ${buildInfo ? `
 
     const userPrompt = `${landBlock}
 
-첨부 사진: ${photos?.length ?? 0}장 (각 사진의 촬영 목적은 아래 참고)
-${photos?.map(p => `- ${p.label}: ${p.key}`).join('\n') ?? ''}
+첨부 사진: ${photos?.length ?? 0}장 (각 사진의 촬영 목적과 사용자 메모는 아래 참고)
+${photos?.map(p => `- ${p.label}${p.memo ? ` [메모: ${p.memo}]` : ''}`).join('\n') ?? ''}
 
 위 정보와 첨부 사진을 종합하여 현장 분석 보고서를 작성해주세요.
 
@@ -188,7 +188,7 @@ async function callGemini(KEY, systemPrompt, userPrompt, photos) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ role: 'user', parts }],
-      generationConfig: { temperature: 0.3, maxOutputTokens: 3000 },
+      generationConfig: { temperature: 0.3, maxOutputTokens: 8192 },
     })
   })
 

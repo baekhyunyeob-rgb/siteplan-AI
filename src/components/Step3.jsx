@@ -45,7 +45,17 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
   const [loadingMsg, setLoadingMsg] = useState(0)
   const [paying, setPaying] = useState(false)
 
+  // 건물 규모 입력 (리모델링 + 건축물대장 없을 때)
+  const [buildingW, setBuildingW] = useState('')
+  const [buildingD, setBuildingD] = useState('')
+  const [buildingFloor, setBuildingFloor] = useState('')
+  // 신축 희망 면적
+  const [desiredArea, setDesiredArea] = useState('')
+
   const msgs = ['공간정보를 분석하고 있습니다...', '법적 현황을 정리하고 있습니다...', '보고서를 작성하고 있습니다...']
+
+  // 건축물대장 없는지 여부
+  const noBuilding = !!landData && !landData.건축물대장
 
   // 지도
   useEffect(() => {
@@ -83,11 +93,21 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
     setAiState('loading')
     setAiError(null)
     const interval = setInterval(() => setLoadingMsg(m => (m + 1) % msgs.length), 2000)
+
+    // 건물 규모 / 희망면적을 requirements에 합쳐서 전달
+    const extraReq = {
+      ...requirements,
+      buildingSize: (purpose === '리모델링' && noBuilding && buildingW && buildingD)
+        ? { 가로: buildingW, 세로: buildingD, 층수: buildingFloor }
+        : null,
+      희망면적: (purpose === '신축' && desiredArea) ? desiredArea : null,
+    }
+
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ landData, purpose, requirements, photos: [], tier: 'free' }),
+        body: JSON.stringify({ landData, purpose, requirements: extraReq, photos: [], tier: 'free' }),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
@@ -203,6 +223,59 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
                 <span>{item.icon}</span><span>{item.text}</span>
               </div>
             ))}
+
+            {/* 리모델링 + 건축물대장 없음 → 건물 규모 입력 */}
+            {purpose === '리모델링' && noBuilding && (
+              <div style={{ marginTop: 12, padding: '12px', background: '#F7F7F5', borderRadius: 10, border: '1px solid #E8E8E8' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 8 }}>
+                  📐 건축물대장이 없어요 — 건물 크기를 입력해주세요
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 10, color: '#aaa', marginBottom: 3 }}>가로 (m)</div>
+                    <input type="number" placeholder="예: 8" value={buildingW}
+                      onChange={e => setBuildingW(e.target.value)}
+                      style={{ width: '100%', padding: '7px 10px', fontSize: 12, borderRadius: 8, border: '1px solid #E8E8E8', boxSizing: 'border-box' }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 10, color: '#aaa', marginBottom: 3 }}>세로 (m)</div>
+                    <input type="number" placeholder="예: 12" value={buildingD}
+                      onChange={e => setBuildingD(e.target.value)}
+                      style={{ width: '100%', padding: '7px 10px', fontSize: 12, borderRadius: 8, border: '1px solid #E8E8E8', boxSizing: 'border-box' }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 10, color: '#aaa', marginBottom: 3 }}>층수</div>
+                    <input type="number" placeholder="예: 1" value={buildingFloor}
+                      onChange={e => setBuildingFloor(e.target.value)}
+                      style={{ width: '100%', padding: '7px 10px', fontSize: 12, borderRadius: 8, border: '1px solid #E8E8E8', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+                {buildingW && buildingD && (
+                  <div style={{ fontSize: 11, color: '#0F6E56' }}>
+                    추정 건축면적: 약 {Math.round(buildingW * buildingD / 3.3)}평 ({Math.round(buildingW * buildingD)}㎡)
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 신축 → 희망 건축 면적 */}
+            {purpose === '신축' && (
+              <div style={{ marginTop: 12, padding: '12px', background: '#F7F7F5', borderRadius: 10, border: '1px solid #E8E8E8' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 8 }}>
+                  📐 희망 건축 면적을 알려주세요 (선택)
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input type="number" placeholder="예: 20" value={desiredArea}
+                    onChange={e => setDesiredArea(e.target.value)}
+                    style={{ width: 80, padding: '7px 10px', fontSize: 12, borderRadius: 8, border: '1px solid #E8E8E8' }} />
+                  <span style={{ fontSize: 12, color: '#555' }}>평</span>
+                  {desiredArea && (
+                    <span style={{ fontSize: 11, color: '#0F6E56' }}>(약 {Math.round(desiredArea * 3.3)}㎡)</span>
+                  )}
+                </div>
+                <div style={{ fontSize: 10, color: '#aaa', marginTop: 4 }}>모르면 비워두세요 — 예산 기반으로 추정합니다</div>
+              </div>
+            )}
           </div>
           <div style={{ padding: '0 16px 16px' }}>
             <button

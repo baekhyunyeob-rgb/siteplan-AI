@@ -45,7 +45,9 @@ ${buildInfo ? `
 ## 사용자 요구사항
 - 목적: ${purpose ?? '미상'}
 - 세부조건: ${JSON.stringify(requirements?.answers ?? {})}
-- 예산: ${requirements?.budget ? `${(requirements.budget / 10000).toFixed(1)}억원` : '미정'}`
+- 예산: ${requirements?.budget ? `${(requirements.budget / 10000).toFixed(1)}억원` : '미정'}
+${requirements?.buildingSize ? `- 건물 규모 (사용자 입력): 가로 ${requirements.buildingSize.가로}m × 세로 ${requirements.buildingSize.세로}m, ${requirements.buildingSize.층수}층 (건축물대장 없음)` : ''}
+${requirements?.희망면적 ? `- 희망 건축 면적: 약 ${requirements.희망면적}평 (${Math.round(requirements.희망면적 * 3.3)}㎡)` : ''}`
 
     // ─────────────────────────────────────────────────────────────
     // 1단계(free): 공간정보만으로 토지 기본 요약

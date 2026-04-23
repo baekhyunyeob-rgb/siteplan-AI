@@ -41,6 +41,10 @@ function downloadPDF(result, landData) {
   const plans = result?.방안 ?? []
   const recommended = result?.추천방안
 
+  const reqSection = result?.고객요약 ? `
+  <h2>의뢰인 요구사항 요약</h2>
+  <div style="padding:12px;background:#F0FBF6;border-radius:8px;border-left:4px solid #0F6E56;font-size:12px;color:#333;line-height:1.8">${result.고객요약}</div>` : ''
+
   const planRows = plans.map((p, i) => {
     const label = ['A', 'B', 'C'][i]
     const isRec = recommended === label
@@ -90,6 +94,7 @@ function downloadPDF(result, landData) {
   <h1>SiteplanAI 현장 분석 리포트</h1>
   <div class="meta">📍 ${addr} &nbsp;|&nbsp; 작성일: ${date} &nbsp;|&nbsp; 본 문서는 설계사무소 상담 준비용 참고자료입니다</div>
 
+  ${reqSection}
   <h2>현황 진단</h2>
   <div style="margin-bottom:8px">
     <span class="badge" style="background:#FAEEDA;color:#BA7517">${result?.현황진단?.종합등급 ?? '보통'}</span>

@@ -486,7 +486,7 @@ export default function Step5({ landData, purpose, requirements, tier, photos, s
                 reader.onload = e => res(e.target.result.split(',')[1])
                 reader.readAsDataURL(p.file)
               })
-              return { key: p.key, label: p.label, base64, mimeType: p.file.type }
+              return { key: p.key, label: p.label, memo: p.memo ?? '', base64, mimeType: p.file.type }
             }
             return null
           })

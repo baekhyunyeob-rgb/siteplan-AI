@@ -387,7 +387,7 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
               { icon: '📸', text: '현장 사진 AI 분석 (건물 상태·지형·접도)' },
               { icon: '🏗', text: '구현 방안 A · B · C 제안 + 장단점' },
               { icon: '⭐', text: '추천 방안 + 이유' },
-              { icon: '💰', text: '개략 예산 범위 (±30~40% 오차 명시)' },
+              { icon: '💰', text: '개략 예산 (표준품셈·시장가 기준, VAT 별도)' },
               { icon: '📄', text: '설계사무소 지참용 기초 문서' },
             ].map((item, i) => (
               <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: '#333', marginBottom: 6, lineHeight: 1.5 }}>

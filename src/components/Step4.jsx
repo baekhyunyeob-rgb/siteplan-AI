@@ -240,7 +240,8 @@ export default function Step4({ purpose, tier, requirements, photos, setPhotos, 
     <div style={s.wrap}>
       <div style={{ padding: '12px 14px', background: '#FAEEDA', borderRadius: 10, border: '1px solid #FAC775', fontSize: 12, color: '#BA7517', lineHeight: 1.7 }}>
         📸 AI가 사진을 분석해 현황을 진단하고 방안 A·B·C를 제안합니다.<br />
-        각 항목에 여러 장 업로드 가능하며, 설명을 입력할수록 분석이 정확해집니다.
+        각 항목에 여러 장 업로드 가능하며, 설명을 입력할수록 분석이 정확해집니다.<br />
+        <span style={{ fontSize: 11 }}>예산은 2025년 표준품셈·시장가 기준으로 산출되며 VAT 별도입니다.</span>
       </div>
 
       <div style={s.card}>

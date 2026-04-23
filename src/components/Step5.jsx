@@ -373,8 +373,21 @@ function BasicResult({ result, landData, onRestart }) {
                 {result.총예산.하한?.toLocaleString()}만 ~ {result.총예산.상한?.toLocaleString()}만원
               </span>
             </div>
-            <div style={{ fontSize: 10, color: '#aaa', marginTop: 8 }}>
-              {result.총예산.비고 ?? '현장 사진 기반 참고치입니다. ±30~40% 오차가 있을 수 있으며, 정확한 견적은 드론 측량 후 확정됩니다.'}
+            <div style={{ fontSize: 10, color: '#aaa', marginTop: 8, lineHeight: 1.7 }}>
+              {result.총예산.비고 ?? '현장 사진 기반 참고치입니다. 정확한 견적은 드론 측량 후 확정됩니다.'}
+            </div>
+
+            {/* 단가 출처 안내 */}
+            <div style={{ marginTop: 12, padding: '10px 12px', background: '#F0F7FF', borderRadius: 8, border: '1px solid #C8DFF7' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#185FA5', marginBottom: 6 }}>📋 예산 산출 기준</div>
+              <div style={{ fontSize: 10, color: '#555', lineHeight: 1.8 }}>
+                <div>• <b>표준품셈</b> — 국토교통부 공식 원가에 이윤·관리비 35% 가산 <span style={{ color: '#aaa' }}>(오차 ±10%)</span></div>
+                <div>• <b>시장시공가격</b> — 조달청 나라장터 실거래 단가 <span style={{ color: '#aaa' }}>(오차 ±10%)</span></div>
+                <div>• <b>시장조사</b> — 업계 통용 견적가 기준 <span style={{ color: '#aaa' }}>(오차 ±15~20%)</span></div>
+              </div>
+              <div style={{ marginTop: 8, fontSize: 10, color: '#BA7517', lineHeight: 1.7 }}>
+                💡 <b>절감 팁</b> — 인근 지방 중소도시 업체가 수도권 대비 10~20% 유리합니다. 반드시 2~3개 업체 비교 견적을 받으세요.
+              </div>
             </div>
           </div>
         </div>
@@ -414,8 +427,12 @@ function BasicResult({ result, landData, onRestart }) {
       )}
 
       {/* 면책 */}
-      <div style={{ padding: '12px 14px', background: '#F7F7F5', borderRadius: 10, border: '1px solid #E8E8E8', fontSize: 11, color: '#aaa', lineHeight: 1.7 }}>
-        본 문서는 현장 사진 기반 AI 분석 참고자료이며, 설계사무소 상담 준비용입니다. 정확한 물량·예산은 드론 측량 후 확정됩니다.
+      <div style={{ padding: '12px 14px', background: '#F7F7F5', borderRadius: 10, border: '1px solid #E8E8E8', fontSize: 10, color: '#aaa', lineHeight: 1.8 }}>
+        <div>• 본 보고서는 현장 사진 기반 AI 분석 참고자료이며, 설계사무소 상담 준비용입니다.</div>
+        <div>• 예산은 2025년 상반기 표준품셈·시장가 기준이며, VAT 별도입니다.</div>
+        <div>• 표준품셈 항목 ±10%, 시장조사 항목 ±15~20% 오차 가능합니다.</div>
+        <div>• 정확한 물량·금액은 드론 측량 및 현장 실측 후 확정됩니다.</div>
+        <div>• 보조금은 연도·지역별 변경될 수 있으니 해당 기관에 직접 확인하세요.</div>
       </div>
 
       {/* PDF */}

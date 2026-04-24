@@ -478,7 +478,7 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
               onClick={paying ? undefined : handlePremium}
               style={{ width: '100%', padding: 13, borderRadius: 10, border: 'none', background: paying ? '#ccc' : '#185FA5', color: '#fff', fontSize: 13, fontWeight: 500, cursor: paying ? 'not-allowed' : 'pointer' }}
             >
-              {paying ? '처리 중...' : '사진 + 드론 데이터 업로드하기 →'}
+              {paying ? '처리 중...' : '사진 + 드론 데이터 업로드하고 AI 분석받기 →'}
             </button>
           </div>
         </div>

@@ -45,6 +45,47 @@ function downloadPDF(result, landData) {
   <h2>의뢰인 요구사항 요약</h2>
   <div style="padding:12px;background:#F0FBF6;border-radius:8px;border-left:4px solid #0F6E56;font-size:12px;color:#333;line-height:1.8">${result.고객요약}</div>` : ''
 
+  // ── 토지정보 요약 ──────────────────────────────────────────
+  const land = landData?.토지기본 ?? {}
+  const char = landData?.토지특성 ?? {}
+  const bld  = landData?.건축물대장
+
+  const landRows = [
+    { label: '지목', value: land.지목 },
+    { label: '면적', value: land.면적 },
+    { label: '용도지역', value: char.용도지역 },
+    { label: '용도지구', value: char.용도지구 },
+    { label: '건폐율', value: char.건폐율 },
+    { label: '용적률', value: char.용적률 },
+    { label: '도로접면', value: char.도로접면 },
+    { label: '지형경사', value: char.지형경사 },
+    { label: '공시지가', value: char.공시지가 },
+    { label: '공시기준', value: char.공시기준 },
+  ].filter(r => r.value).map(r =>
+    `<div class="row"><span style="color:#888">${r.label}</span><span>${r.value}</span></div>`
+  ).join('')
+
+  const bldRows = bld ? [
+    { label: '건물명칭', value: bld.건물명칭 },
+    { label: '주용도', value: bld.주용도 },
+    { label: '구조', value: bld.구조 },
+    { label: '층수', value: bld.층수 },
+    { label: '연면적', value: bld.연면적 },
+    { label: '건축면적', value: bld.건축면적 },
+    { label: '사용승인일', value: bld.사용승인일 },
+  ].filter(r => r.value).map(r =>
+    `<div class="row"><span style="color:#888">${r.label}</span><span>${r.value}</span></div>`
+  ).join('') : ''
+
+  const landSection = `
+  <h2>토지 기본정보</h2>
+  ${landRows || '<div style="font-size:12px;color:#aaa">수집된 토지정보가 없습니다.</div>'}
+  <h2>건축물대장 요약</h2>
+  ${bldRows
+    ? `<div style="font-size:11px;color:#888;margin-bottom:8px">※ 건축물대장 원본은 정부24(gov.kr) 또는 세움터(eais.go.kr)에서 발급받으세요.</div>${bldRows}`
+    : '<div style="padding:10px 12px;background:#FEF2F2;border-radius:6px;font-size:12px;color:#A32D2D">건축물대장 없음 (미등기 또는 나대지) — 리모델링 전 건축물대장 생성·추인 절차 필요</div>'
+  }`
+
   const planRows = plans.map((p, i) => {
     const label = ['A', 'B', 'C'][i]
     const isRec = recommended === label
@@ -95,6 +136,8 @@ function downloadPDF(result, landData) {
   <div class="meta">📍 ${addr} &nbsp;|&nbsp; 작성일: ${date} &nbsp;|&nbsp; 본 문서는 설계사무소 상담 준비용 참고자료입니다</div>
 
   ${reqSection}
+  ${landSection}
+
   <h2>현황 진단</h2>
   <div style="margin-bottom:8px">
     <span class="badge" style="background:#FAEEDA;color:#BA7517">${result?.현황진단?.종합등급 ?? '보통'}</span>

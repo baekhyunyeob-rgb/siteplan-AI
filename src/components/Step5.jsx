@@ -455,6 +455,60 @@ function BasicResult({ result, landData, onRestart }) {
         <span style={{ color: '#185FA5', fontSize: 18 }}>↓</span>
       </div>
 
+      {/* 3단계 드론 측량 준비 안내 카드 */}
+      <div style={{ borderRadius: 14, border: '2px solid #185FA5', overflow: 'hidden', background: '#fff' }}>
+        <div style={{ padding: '14px 16px 12px', background: '#E6F1FB' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#185FA5', background: '#C8DFF7', display: 'inline-block', padding: '2px 8px', borderRadius: 20, marginBottom: 6 }}>
+            더 정확한 분석을 원하신다면
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#185FA5' }}>🛰 3단계 — 드론 측량 후 정밀 분석</div>
+          <div style={{ fontSize: 11, color: '#555', marginTop: 4 }}>드론 측량 데이터를 확보하신 후 재접속하여 3단계를 선택하세요.</div>
+        </div>
+        <div style={{ padding: '14px 16px' }}>
+
+          {/* 필요 데이터 안내 */}
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#333', marginBottom: 10 }}>📎 필요한 드론 측량 데이터</div>
+          {[
+            {
+              icon: '🛰', name: '정사영상 (Orthophoto)', format: 'GeoTIFF · JPG · PNG',
+              desc: '드론으로 촬영한 수백 장의 항공사진을 하나의 정밀 지도로 합성한 파일입니다. 실제 면적·경계·건물 위치 확인에 사용합니다.',
+              software: 'Pix4D · DJI Terra · Agisoft Metashape',
+            },
+            {
+              icon: '📡', name: '포인트클라우드 (Point Cloud)', format: 'LAS · LAZ',
+              desc: '드론 사진으로 생성한 3D 점군 데이터입니다. 경사도·고저차·절토성토 체적을 정밀 계산하는 데 활용합니다. LAZ(압축)가 파일 용량이 작아 업로드에 유리합니다.',
+              software: 'Pix4D · DJI Terra · Agisoft Metashape',
+            },
+          ].map((item, i) => (
+            <div key={i} style={{ marginBottom: 10, padding: '10px 12px', background: '#F7F7F5', borderRadius: 8, border: '1px solid #E8E8E8' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <span style={{ fontSize: 18 }}>{item.icon}</span>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600 }}>{item.name}</div>
+                  <div style={{ fontSize: 10, color: '#185FA5' }}>{item.format}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: '#555', lineHeight: 1.6, marginBottom: 4 }}>{item.desc}</div>
+              <div style={{ fontSize: 10, color: '#888' }}>생성 소프트웨어: {item.software}</div>
+            </div>
+          ))}
+
+          {/* 측량 업체 안내 */}
+          <div style={{ padding: '10px 12px', background: '#FAEEDA', borderRadius: 8, border: '1px solid #FAC775', fontSize: 11, color: '#BA7517', lineHeight: 1.7, marginBottom: 10 }}>
+            💡 <strong>드론 측량 업체 찾기</strong><br />
+            네이버·카카오에서 "드론 측량", "항공측량", "드론 포토그래메트리"로 검색하세요.
+            농지·소규모 부지 기준 측량비용은 약 30~80만원 수준입니다. (면적·지형에 따라 상이)
+          </div>
+
+          {/* 재방문 안내 */}
+          <div style={{ padding: '10px 12px', background: '#F0F7FF', borderRadius: 8, border: '1px solid #C8DFF7', fontSize: 11, color: '#185FA5', lineHeight: 1.7 }}>
+            🔄 <strong>재방문 방법</strong><br />
+            드론 측량 완료 후 앱에 다시 접속하여 주소를 입력하고, Step3에서 <strong>3단계 카드</strong>를 선택하세요.
+            사진과 드론 데이터를 함께 업로드하면 정밀 물량표·배치도·렌더링이 포함된 완전 리포트를 받으실 수 있습니다.
+          </div>
+        </div>
+      </div>
+
       <button style={s.restartBtn} onClick={onRestart}>← 새 현장 분석하기</button>
     </div>
   )
@@ -551,5 +605,206 @@ export default function Step5({ landData, purpose, requirements, tier, photos, s
     return <FreeResult result={result} landData={landData} onRestart={onRestart} />
   }
 
+  if (tier === 'premium') {
+    return <PremiumResult result={result} landData={landData} onRestart={onRestart} />
+  }
+
   return <BasicResult result={result} landData={landData} onRestart={onRestart} />
+}
+
+// ── 3단계 결과 ────────────────────────────────────────────────────
+function PremiumResult({ result, landData, onRestart }) {
+  const plans = result?.방안 ?? []
+  const recommended = result?.추천방안
+  const [activeTab, setActiveTab] = useState(recommended ?? plans[0]?.명칭)
+
+  const activePlan = plans.find(p => p.명칭 === activeTab)
+
+  return (
+    <div style={s.wrap}>
+      <div style={{ padding: '8px 12px', background: '#E6F1FB', borderRadius: 8, fontSize: 11, color: '#185FA5' }}>
+        🛰 5단계 · 정밀 분석 결과 — 드론 측량 데이터 기반
+      </div>
+
+      {/* 현황 진단 */}
+      {result?.현황진단 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>정밀 현황 분석</div>
+          <div style={s.cardBody}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: result.현황진단.상태 === '양호' ? '#0F6E56' : result.현황진단.상태 === '보통' ? '#BA7517' : '#A32D2D', flexShrink: 0 }} />
+              <span style={{ fontSize: 14, fontWeight: 700 }}>{result.현황진단.요약}</span>
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: '#E6F1FB', color: '#185FA5', marginLeft: 'auto' }}>{result.현황진단.상태}</span>
+            </div>
+            {result.현황진단.세부?.map((item, i) => (
+              <div key={i} style={{ fontSize: 12, color: '#555', marginBottom: 4, paddingLeft: 16, lineHeight: 1.6 }}>• {item}</div>
+            ))}
+            {result.현황진단.위험?.map((item, i) => (
+              <div key={i} style={{ fontSize: 11, color: '#A32D2D', marginTop: 4, padding: '4px 8px', background: '#FEF2F2', borderRadius: 6 }}>⚠ {item}</div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 방안 탭 */}
+      {plans.length > 0 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>구현 방안 비교</div>
+          <div style={s.cardBody}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              {plans.map(p => (
+                <button key={p.명칭} onClick={() => setActiveTab(p.명칭)} style={{
+                  flex: 1, padding: '8px 4px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                  background: activeTab === p.명칭 ? (p.명칭 === recommended ? '#185FA5' : '#1A1A1A') : '#F7F7F5',
+                  color: activeTab === p.명칭 ? '#fff' : '#888',
+                  fontSize: 11, fontWeight: activeTab === p.명칭 ? 700 : 400,
+                }}>
+                  {p.명칭}<br />
+                  {p.명칭 === recommended && <span style={{ fontSize: 9 }}>⭐ 추천</span>}
+                </button>
+              ))}
+            </div>
+            {activePlan && (
+              <div>
+                {activePlan.명칭 === recommended && (
+                  <div style={{ fontSize: 11, color: '#185FA5', fontWeight: 600, marginBottom: 6 }}>⭐ 추천 방안</div>
+                )}
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{activePlan.제목}</div>
+                <div style={{ fontSize: 12, color: '#555', lineHeight: 1.7, marginBottom: 10 }}>{activePlan.설명}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+                  <div style={{ padding: '8px 10px', background: '#E1F5EE', borderRadius: 8 }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: '#0F6E56', marginBottom: 4 }}>장점</div>
+                    {activePlan.장점?.map((v, i) => <div key={i} style={{ fontSize: 11, color: '#333' }}>✓ {v}</div>)}
+                  </div>
+                  <div style={{ padding: '8px 10px', background: '#FEF2F2', borderRadius: 8 }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: '#A32D2D', marginBottom: 4 }}>단점</div>
+                    {activePlan.단점?.map((v, i) => <div key={i} style={{ fontSize: 11, color: '#333' }}>• {v}</div>)}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: '#F0F7FF', borderRadius: 10 }}>
+                  <span style={{ fontSize: 11, color: '#888' }}>개략 예산</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: '#185FA5' }}>
+                    {activePlan.예산하한?.toLocaleString()}만 ~ {activePlan.예산상한?.toLocaleString()}만원
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 총 예산 */}
+      {result?.총예산 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>정밀 예산 (추천 방안 기준)</div>
+          <div style={s.cardBody}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: '#F0F7FF', borderRadius: 10, marginBottom: 10 }}>
+              <span style={{ fontSize: 11, color: '#888' }}>총 예상 비용</span>
+              <span style={{ fontSize: 20, fontWeight: 700, color: '#185FA5' }}>
+                {result.총예산.하한?.toLocaleString()}만 ~ {result.총예산.상한?.toLocaleString()}만원
+              </span>
+            </div>
+            <div style={{ fontSize: 10, color: '#aaa', lineHeight: 1.7 }}>
+              {result.총예산.비고 ?? '드론 측량 데이터 기반 정밀 산출. VAT 별도.'}
+            </div>
+            <div style={{ marginTop: 10, padding: '10px 12px', background: '#F0F7FF', borderRadius: 8, border: '1px solid #C8DFF7', fontSize: 10, color: '#555', lineHeight: 1.8 }}>
+              <div style={{ fontWeight: 600, color: '#185FA5', marginBottom: 4 }}>📋 예산 산출 기준</div>
+              <div>• <b>표준품셈</b> — 국토교통부 원가 × 1.35 <span style={{ color: '#aaa' }}>(오차 ±10%)</span></div>
+              <div>• <b>시장시공가격</b> — 나라장터 실거래 단가 <span style={{ color: '#aaa' }}>(오차 ±10%)</span></div>
+              <div>• <b>시장조사</b> — 업계 통용 견적가 <span style={{ color: '#aaa' }}>(오차 ±15~20%)</span></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 첨부물 5종 */}
+      <div style={{ ...s.card, border: '1px solid #185FA5' }}>
+        <div style={{ ...s.cardHeader, color: '#185FA5', background: '#F0F7FF', borderBottom: '1px solid #C8DFF7' }}>
+          📎 첨부물 다운로드
+        </div>
+        <div style={s.cardBody}>
+          {[
+            { num: '①', icon: '📋', title: '공종별 물량표', sub: '드론 수치 기반 AI 산출', status: '제공', color: '#0F6E56', bg: '#E1F5EE', available: true },
+            { num: '②', icon: '💰', title: '정밀 예산 산출서', sub: '물량표 × 표준단가', status: '제공', color: '#0F6E56', bg: '#E1F5EE', available: true },
+            { num: '③', icon: '📐', title: '개략 배치도·평면도', sub: 'AI SVG 생성', status: '개발중', color: '#BA7517', bg: '#FAEEDA', available: false },
+            { num: '④', icon: '🌐', title: '3D 지형 모델', sub: '포인트클라우드 시각화', status: '개발중', color: '#BA7517', bg: '#FAEEDA', available: false },
+            { num: '⑤', icon: '🎨', title: 'AI 렌더링', sub: '공사 후 예상 모습', status: '개발중', color: '#BA7517', bg: '#FAEEDA', available: false },
+          ].map((item, i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 12px', marginBottom: 8, borderRadius: 10,
+              background: item.available ? '#fff' : '#FAFAF8',
+              border: `1px solid ${item.available ? '#C8DFF7' : '#E8E8E8'}`,
+              opacity: item.available ? 1 : 0.7,
+              cursor: item.available ? 'pointer' : 'default',
+            }}>
+              <span style={{ fontSize: 20 }}>{item.icon}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 600 }}>{item.num} {item.title}</div>
+                <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>{item.sub}</div>
+              </div>
+              <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 10, background: item.bg, color: item.color, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                {item.status}
+              </span>
+              {item.available && <span style={{ color: '#185FA5', fontSize: 16 }}>↓</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 보조금 */}
+      {result?.보조금?.length > 0 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>🎁 보조금 매칭</div>
+          <div style={s.cardBody}>
+            {result.보조금.map((g, i) => (
+              <div key={i} style={{ padding: '10px 12px', background: '#E1F5EE', borderRadius: 10, marginBottom: 8, border: '1px solid #9FE1CB' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600 }}>{g.사업명}</span>
+                  <span style={{ fontSize: 11, color: '#0F6E56', fontWeight: 700 }}>최대 {g.지원금액}</span>
+                </div>
+                <div style={{ fontSize: 11, color: '#555', lineHeight: 1.5 }}>{g.설명}</div>
+              </div>
+            ))}
+            <div style={{ fontSize: 10, color: '#aaa', marginTop: 4 }}>* 보조금은 연도·지역별 변경될 수 있으니 해당 기관에 직접 확인하세요.</div>
+          </div>
+        </div>
+      )}
+
+      {/* 전문가 의견 */}
+      {result?.전문가의견 && (
+        <div style={s.card}>
+          <div style={s.cardHeader}>전문가 의견</div>
+          <div style={s.cardBody}>
+            <div style={{ fontSize: 12, color: '#333', lineHeight: 1.8 }}>{result.전문가의견}</div>
+          </div>
+        </div>
+      )}
+
+      {/* 면책 */}
+      <div style={{ padding: '12px 14px', background: '#F7F7F5', borderRadius: 10, border: '1px solid #E8E8E8', fontSize: 10, color: '#aaa', lineHeight: 1.8 }}>
+        <div>• 본 보고서는 드론 측량 데이터 기반 AI 분석 결과이며, 시공업체 견적 준비용입니다.</div>
+        <div>• 예산은 2025년 상반기 표준품셈·시장가 기준이며, VAT 별도입니다.</div>
+        <div>• 정확한 물량은 현장 실측 후 확정되며, ±10~15% 오차 가능합니다.</div>
+        <div>• 보조금은 연도·지역별 변경될 수 있으니 해당 기관에 직접 확인하세요.</div>
+      </div>
+
+      {/* PDF */}
+      <div style={s.pdfRow} onClick={() => downloadPDF(result, landData)}>
+        <div style={{ width: 36, height: 36, borderRadius: 8, background: '#E6F1FB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#185FA5" strokeWidth="1.3">
+            <rect x="3" y="1" width="12" height="16" rx="2" />
+            <path d="M6 6h6M6 9h6M6 12h4" />
+          </svg>
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 500 }}>시공자용 완전 리포트 PDF</div>
+          <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>현황진단·방안비교·물량표·보조금 포함</div>
+        </div>
+        <span style={{ color: '#185FA5', fontSize: 18 }}>↓</span>
+      </div>
+
+      <button style={s.restartBtn} onClick={onRestart}>← 새 현장 분석하기</button>
+    </div>
+  )
 }

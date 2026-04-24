@@ -32,8 +32,8 @@ export default function App() {
   const [purpose, setPurpose] = useState(null)
   const [requirements, setRequirements] = useState({})
   const [photos, setPhotos] = useState([])
-  const [surveyFiles, setSurveyFiles] = useState([])
-  // tier: 'free'(1단계 무료) | 'basic'(2단계 9,900원)
+  const [surveyFiles, setSurveyFiles] = useState({ ortho: [], pointcloud: [] })
+  // tier: 'free'(1단계 무료) | 'basic'(2단계 9,900원) | 'premium'(3단계 19,900원)
   const [tier, setTier] = useState(null)
 
   const goNext = () => setStep(s => s + 1)
@@ -46,7 +46,7 @@ export default function App() {
     setPurpose(null)
     setRequirements({})
     setPhotos([])
-    setSurveyFiles([])
+    setSurveyFiles({ ortho: [], pointcloud: [] })
     setTier(null)
   }
 
@@ -159,6 +159,8 @@ export default function App() {
             requirements={requirements}
             photos={photos}
             setPhotos={setPhotos}
+            surveyFiles={surveyFiles}
+            setSurveyFiles={setSurveyFiles}
             onBack={goBack}
             onNext={goNext}
           />

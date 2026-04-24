@@ -132,6 +132,16 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
     }
   }
 
+  async function handlePremium() {
+    setPaying(true)
+    try {
+      const ok = await processTierPayment('premium')
+      if (ok) { setTier('premium'); onNext() }
+    } finally {
+      setPaying(false)
+    }
+  }
+
   const basic    = landData?.토지기본
   const char     = landData?.토지특성
   const building = landData?.건축물대장
@@ -404,6 +414,70 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
               style={{ width: '100%', padding: 13, borderRadius: 10, border: 'none', background: paying ? '#ccc' : '#BA7517', color: '#fff', fontSize: 13, fontWeight: 500, cursor: paying ? 'not-allowed' : 'pointer' }}
             >
               {paying ? '처리 중...' : '사진 업로드하고 AI 분석받기 →'}
+            </button>
+          </div>
+        </div>
+
+        {/* 3단계 카드 */}
+        <div style={{ borderRadius: 14, border: '2px solid #185FA5', overflow: 'hidden', background: '#fff' }}>
+          <div style={{ padding: '14px 16px 12px', background: '#E6F1FB' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#185FA5', background: '#C8DFF7', display: 'inline-block', padding: '2px 8px', borderRadius: 20, marginBottom: 6 }}>
+                  3단계 · 프리미엄
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#185FA5' }}>정밀 분석 + 완전 리포트</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#185FA5' }}>19,900원</div>
+                <div style={{ fontSize: 10, color: '#aaa', marginTop: 2 }}>시공업체 견적용 완전 패키지</div>
+              </div>
+            </div>
+          </div>
+          <div style={{ padding: '12px 16px' }}>
+            {[
+              { icon: '🛰', text: '드론 측량 데이터 업로드 (정사영상·포인트클라우드)' },
+              { icon: '📐', text: '정밀 경사도·고저차·체적 계산' },
+              { icon: '🏗', text: '구현 방안 A · B · C + 상세 설계 방향' },
+              { icon: '💰', text: '정확한 예산 (±10~15% 오차)' },
+              { icon: '⚖️', text: '법적 검토 (인허가 사항)' },
+              { icon: '📄', text: '시공자용 완전 리포트 PDF' },
+            ].map((item, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: '#333', marginBottom: 6, lineHeight: 1.5 }}>
+                <span>{item.icon}</span><span>{item.text}</span>
+              </div>
+            ))}
+
+            {/* 첨부물 5종 */}
+            <div style={{ marginTop: 12, padding: '10px 12px', background: '#F0F7FF', borderRadius: 8, border: '1px solid #C8DFF7' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#185FA5', marginBottom: 8 }}>📎 첨부물 5종</div>
+              {[
+                { num: '①', text: '공종별 물량표', status: '제공', statusColor: '#0F6E56', statusBg: '#E1F5EE' },
+                { num: '②', text: '정밀 예산 산출서', status: '제공', statusColor: '#0F6E56', statusBg: '#E1F5EE' },
+                { num: '③', text: '개략 배치도·평면도 (AI SVG)', status: '개발중', statusColor: '#BA7517', statusBg: '#FAEEDA' },
+                { num: '④', text: '3D 지형 모델', status: '개발중', statusColor: '#BA7517', statusBg: '#FAEEDA' },
+                { num: '⑤', text: 'AI 렌더링 (공사 후 예상 모습)', status: '개발중', statusColor: '#BA7517', statusBg: '#FAEEDA' },
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#333', marginBottom: 5 }}>
+                  <span style={{ color: '#185FA5', fontWeight: 700, width: 16 }}>{item.num}</span>
+                  <span style={{ flex: 1 }}>{item.text}</span>
+                  <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 10, background: item.statusBg, color: item.statusColor, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                    {item.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: 10, padding: '8px 10px', background: '#E6F1FB', borderRadius: 8, fontSize: 11, color: '#185FA5' }}>
+              🛰 드론 측량 데이터(GeoTIFF·LAS)가 필요합니다. 준비되지 않으셨다면 2단계를 먼저 진행하세요.
+            </div>
+          </div>
+          <div style={{ padding: '0 16px 16px' }}>
+            <button
+              onClick={paying ? undefined : handlePremium}
+              style={{ width: '100%', padding: 13, borderRadius: 10, border: 'none', background: paying ? '#ccc' : '#185FA5', color: '#fff', fontSize: 13, fontWeight: 500, cursor: paying ? 'not-allowed' : 'pointer' }}
+            >
+              {paying ? '처리 중...' : '사진 + 드론 데이터 업로드하기 →'}
             </button>
           </div>
         </div>

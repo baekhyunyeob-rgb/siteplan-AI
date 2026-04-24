@@ -188,7 +188,7 @@ function PhotoItem({ guide, files, memo, onAdd, onRemove, onMemo }) {
   )
 }
 
-export default function Step4({ purpose, tier, requirements, photos, setPhotos, onBack, onNext }) {
+export default function Step4({ purpose, tier, requirements, photos, setPhotos, surveyFiles, setSurveyFiles, onBack, onNext }) {
   const [memos, setMemos] = useState({})
 
   const guides = buildGuides(purpose, requirements?.answers)
@@ -202,6 +202,11 @@ export default function Step4({ purpose, tier, requirements, photos, setPhotos, 
 
   const allRequiredDone = requiredKeys.every(k => (photosByKey[k]?.length ?? 0) > 0)
   const remaining = requiredKeys.filter(k => !(photosByKey[k]?.length > 0)).length
+
+  // 3단계: 드론 데이터 업로드 여부
+  const hasOrtho = surveyFiles?.ortho?.length > 0
+  const hasPointCloud = surveyFiles?.pointcloud?.length > 0
+  const premiumReady = allRequiredDone && (hasOrtho || hasPointCloud)
 
   async function handleAdd(guide) {
     const input = document.createElement('input')
@@ -236,14 +241,46 @@ export default function Step4({ purpose, tier, requirements, photos, setPhotos, 
     setPhotos(prev => prev.map(p => p.key === key ? { ...p, memo: val } : p))
   }
 
+  function handleSurveyUpload(type) {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.multiple = true
+    input.accept = type === 'ortho'
+      ? '.tif,.tiff,.jpg,.jpeg,.png'
+      : '.las,.laz'
+    input.onchange = (e) => {
+      const files = Array.from(e.target.files)
+      setSurveyFiles(prev => ({ ...prev, [type]: [...(prev?.[type] ?? []), ...files] }))
+    }
+    input.click()
+  }
+
+  function handleSurveyRemove(type, idx) {
+    setSurveyFiles(prev => {
+      const next = [...(prev?.[type] ?? [])]
+      next.splice(idx, 1)
+      return { ...prev, [type]: next }
+    })
+  }
+
   return (
     <div style={s.wrap}>
-      <div style={{ padding: '12px 14px', background: '#FAEEDA', borderRadius: 10, border: '1px solid #FAC775', fontSize: 12, color: '#BA7517', lineHeight: 1.7 }}>
-        📸 AI가 사진을 분석해 현황을 진단하고 방안 A·B·C를 제안합니다.<br />
-        각 항목에 여러 장 업로드 가능하며, 설명을 입력할수록 분석이 정확해집니다.<br />
-        <span style={{ fontSize: 11 }}>예산은 2025년 표준품셈·시장가 기준으로 산출되며 VAT 별도입니다.</span>
-      </div>
 
+      {/* 안내 */}
+      {tier === 'premium' ? (
+        <div style={{ padding: '12px 14px', background: '#E6F1FB', borderRadius: 10, border: '1px solid #C8DFF7', fontSize: 12, color: '#185FA5', lineHeight: 1.7 }}>
+          🛰 현장 사진과 드론 측량 데이터를 함께 업로드하면 정밀 분석이 가능합니다.<br />
+          <span style={{ fontSize: 11 }}>정사영상(GeoTIFF·JPG) 또는 포인트클라우드(LAS·LAZ) 중 하나 이상 필수입니다.</span>
+        </div>
+      ) : (
+        <div style={{ padding: '12px 14px', background: '#FAEEDA', borderRadius: 10, border: '1px solid #FAC775', fontSize: 12, color: '#BA7517', lineHeight: 1.7 }}>
+          📸 AI가 사진을 분석해 현황을 진단하고 방안 A·B·C를 제안합니다.<br />
+          각 항목에 여러 장 업로드 가능하며, 설명을 입력할수록 분석이 정확해집니다.<br />
+          <span style={{ fontSize: 11 }}>예산은 2025년 표준품셈·시장가 기준으로 산출되며 VAT 별도입니다.</span>
+        </div>
+      )}
+
+      {/* 현장 사진 업로드 */}
       <div style={s.card}>
         <div style={s.cardHeader}>
           현장 사진 업로드
@@ -264,10 +301,104 @@ export default function Step4({ purpose, tier, requirements, photos, setPhotos, 
         </div>
       </div>
 
+      {/* 3단계 전용: 드론 데이터 업로드 */}
+      {tier === 'premium' && (
+        <div style={{ ...s.card, border: '1px solid #185FA5' }}>
+          <div style={{ ...s.cardHeader, color: '#185FA5', borderBottom: '1px solid #C8DFF7', background: '#F0F7FF' }}>
+            🛰 드론 측량 데이터 업로드
+            <span style={{ float: 'right', fontSize: 10, color: '#A32D2D' }}>* 1개 이상 필수</span>
+          </div>
+          <div style={s.cardBody}>
+
+            {/* 정사영상 */}
+            <div style={{ marginBottom: 16, padding: 12, borderRadius: 10, border: `1px solid ${hasOrtho ? '#9FE1CB' : '#E8E8E8'}`, background: hasOrtho ? '#F5FBF8' : '#FAFAF8' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 20 }}>🛰</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>정사영상 (Orthophoto)</div>
+                  <div style={{ fontSize: 10, color: '#888' }}>GeoTIFF (.tif/.tiff) 또는 JPG·PNG</div>
+                </div>
+                <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 10, background: '#E6F1FB', color: '#185FA5', fontWeight: 600 }}>권장</span>
+              </div>
+              <div style={{ fontSize: 11, color: '#666', lineHeight: 1.7, marginBottom: 8 }}>
+                드론 촬영 후 포토그래메트리 소프트웨어(Pix4D·DJI Terra·Agisoft 등)로 생성한 항공사진 합성 이미지입니다.
+                실제 면적·경계·건물 위치·진입로 등을 정확히 파악하는 데 사용합니다.
+              </div>
+              {(surveyFiles?.ortho ?? []).length > 0 && (
+                <div style={{ marginBottom: 8 }}>
+                  {(surveyFiles?.ortho ?? []).map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', background: '#E1F5EE', borderRadius: 6, marginBottom: 4, fontSize: 11 }}>
+                      <span>🗺</span>
+                      <span style={{ flex: 1, color: '#0F6E56', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+                      <span style={{ color: '#888', fontSize: 10 }}>{(f.size / 1024 / 1024).toFixed(1)}MB</span>
+                      <button onClick={() => handleSurveyRemove('ortho', i)} style={{ background: 'none', border: 'none', color: '#A32D2D', cursor: 'pointer', fontSize: 12 }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={() => handleSurveyUpload('ortho')}
+                style={{ width: '100%', padding: '8px', borderRadius: 8, border: '1px dashed #185FA5', background: '#fff', color: '#185FA5', fontSize: 12, cursor: 'pointer' }}
+              >
+                + 정사영상 파일 추가
+              </button>
+            </div>
+
+            {/* 포인트클라우드 */}
+            <div style={{ marginBottom: 8, padding: 12, borderRadius: 10, border: `1px solid ${hasPointCloud ? '#9FE1CB' : '#E8E8E8'}`, background: hasPointCloud ? '#F5FBF8' : '#FAFAF8' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 20 }}>📡</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>포인트클라우드 (Point Cloud)</div>
+                  <div style={{ fontSize: 10, color: '#888' }}>LAS (.las) 또는 LAZ (.laz)</div>
+                </div>
+                <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 10, background: '#E6F1FB', color: '#185FA5', fontWeight: 600 }}>정밀도↑</span>
+              </div>
+              <div style={{ fontSize: 11, color: '#666', lineHeight: 1.7, marginBottom: 8 }}>
+                드론 촬영으로 생성된 3D 점군 데이터입니다. 경사도·고저차·절토성토 체적 계산에 활용됩니다.
+                Pix4D·DJI Terra·Agisoft에서 내보내기 시 LAS 형식으로 저장하세요.
+              </div>
+              {(surveyFiles?.pointcloud ?? []).length > 0 && (
+                <div style={{ marginBottom: 8 }}>
+                  {(surveyFiles?.pointcloud ?? []).map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', background: '#E1F5EE', borderRadius: 6, marginBottom: 4, fontSize: 11 }}>
+                      <span>📡</span>
+                      <span style={{ flex: 1, color: '#0F6E56', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+                      <span style={{ color: '#888', fontSize: 10 }}>{(f.size / 1024 / 1024).toFixed(1)}MB</span>
+                      <button onClick={() => handleSurveyRemove('pointcloud', i)} style={{ background: 'none', border: 'none', color: '#A32D2D', cursor: 'pointer', fontSize: 12 }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={() => handleSurveyUpload('pointcloud')}
+                style={{ width: '100%', padding: '8px', borderRadius: 8, border: '1px dashed #185FA5', background: '#fff', color: '#185FA5', fontSize: 12, cursor: 'pointer' }}
+              >
+                + 포인트클라우드 파일 추가
+              </button>
+            </div>
+
+            {/* 용량 안내 */}
+            <div style={{ padding: '8px 10px', background: '#F0F7FF', borderRadius: 8, fontSize: 10, color: '#555', lineHeight: 1.7 }}>
+              💡 <strong>파일 안내</strong><br />
+              • 정사영상: 일반적으로 50~500MB. GeoTIFF 권장.<br />
+              • 포인트클라우드: 10~200MB. LAZ(압축)가 업로드에 유리.<br />
+              • Vercel 업로드 한도: 파일당 4.5MB 이하. 초과 시 압축 또는 해상도 축소 필요.
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={s.btnRow}>
         <button style={s.backBtn} onClick={onBack}>← 이전</button>
-        <button style={s.nextBtn(allRequiredDone)} onClick={allRequiredDone ? onNext : undefined}>
-          {allRequiredDone ? '분석 시작 →' : `필수 항목 ${remaining}개 더 필요`}
+        <button
+          style={s.nextBtn(tier === 'premium' ? premiumReady : allRequiredDone)}
+          onClick={(tier === 'premium' ? premiumReady : allRequiredDone) ? onNext : undefined}
+        >
+          {tier === 'premium'
+            ? premiumReady ? '정밀 분석 시작 →' : allRequiredDone ? '드론 데이터를 1개 이상 업로드하세요' : `필수 사진 ${remaining}개 더 필요`
+            : allRequiredDone ? '분석 시작 →' : `필수 항목 ${remaining}개 더 필요`
+          }
         </button>
       </div>
     </div>

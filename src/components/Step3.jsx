@@ -375,8 +375,9 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
         </div>
       )}
 
-      {/* ── 2단계 카드 — AI 분석 후에만 표시 ── */}
+      {/* ── 2단계 카드 + 3단계 카드 — AI 분석 후에만 표시 ── */}
       {(aiState === 'done' || aiState === 'error') && hasData && (
+        <>
         <div style={{ borderRadius: 14, border: '2px solid #BA7517', overflow: 'hidden', background: '#fff' }}>
           <div style={{ padding: '14px 16px 12px', background: '#FAEEDA' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -481,6 +482,7 @@ export default function Step3({ landData, purpose, requirements, tier, setTier, 
             </button>
           </div>
         </div>
+        </>
       )}
 
       <button style={s.restartBtn} onClick={onRestart}>← 새 현장 분석하기</button>
